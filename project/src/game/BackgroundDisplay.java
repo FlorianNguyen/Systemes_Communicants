@@ -1,8 +1,14 @@
 package game;
+import graphics.Mouse;
 import graphics.Player;
 
+import java.awt.AWTException;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -26,6 +32,7 @@ import others.Bullet;
  */
 public class BackgroundDisplay extends JPanel implements ActionListener{
 
+	Player player;
 	public BufferedImage background;
 	public int height,width;
 	public int Y;
@@ -38,9 +45,10 @@ public class BackgroundDisplay extends JPanel implements ActionListener{
  * @param sourcename Source du fichier image (png) qui sera utilisé en fond d'écran.
  * L'image doit être cyclique, c'est à dire que la partie haute et la partie basse sont compatibles.
  */
-	public BackgroundDisplay(JFrame f,String sourcename)
+	public BackgroundDisplay(Player p,JFrame f,String sourcename)
 	{
 		try {
+			player = p;
 			frame = f;
 			background = ImageIO.read(new File(sourcename));
 			height = background.getHeight();
@@ -61,24 +69,13 @@ public class BackgroundDisplay extends JPanel implements ActionListener{
 		Y+=1;
 		for(int i=(Y%background.getHeight())-background.getHeight();i<background.getHeight();i+=background.getHeight()) {
 			g.drawImage(background,0,i,this);
-			g.drawImage(background,0,i+2*background.getHeight(),this);
+			g.drawImage(
+					player.getSprite(),
+					player.getX()-(int)player.getSprite().getWidth()/2,
+					player.getY()-(int)player.getSprite().getHeight()/2,
+					this);
 		}
 		g.dispose();
-	}
-/**
- * Test d'affichage de la classe BackgroundDisplay.
- * @param args
- */
-	public static void main(String args[])
-	{
-		JFrame frame = new JFrame();
-		BackgroundDisplay animatedBackground = new BackgroundDisplay(frame,"background2.png");
-		frame.setSize(animatedBackground.getWidth(),(int)(animatedBackground.getHeight()*0.75));
-		frame.setVisible(true);
-		frame.add(animatedBackground);
-		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
-
 	}
 
 	/**
@@ -103,5 +100,29 @@ public class BackgroundDisplay extends JPanel implements ActionListener{
 	{
 		return width;
 	}
+	
+	/**
+	 * Test d'affichage de la classe BackgroundDisplay.
+	 * @param args
+	 */
+		public static void main(String args[])
+		{				
+					JFrame frame = new JFrame();
+					Player player1 = new Player("player_1",1);
+					BackgroundDisplay animatedBackground = new BackgroundDisplay(player1,frame,"background2.png");
+					Player player = new Player("player_1",1);				
+					Mouse mouse = new Mouse(player1,frame);
+					mouse.start();
+					
+					frame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
+							new BufferedImage(16,16,BufferedImage.TYPE_INT_ARGB),
+							new Point(0,0),"Blank cursor"));
+					frame.setSize(animatedBackground.getWidth(),(int)(animatedBackground.getHeight()*0.75));
+					frame.setLocationRelativeTo(null);
+					frame.setVisible(true);
+					frame.add(animatedBackground);
+					frame.setResizable(false);
+					frame.setLocationRelativeTo(null);
 
+		}
 }

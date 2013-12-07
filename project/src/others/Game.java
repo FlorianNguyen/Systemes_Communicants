@@ -59,9 +59,9 @@ public class Game extends JPanel implements ActionListener {
         frame.setVisible(true);    
         try {
 			Bullet.sprite = ImageIO.read(new File("bullet.png"));
-			boss = ImageIO.read(new File("boss.png"));
-			player = ImageIO.read(new File("player.png"));
-			background = ImageIO.read(new File("Background.png"));
+			boss = ImageIO.read(new File("left_11.png"));
+			player = ImageIO.read(new File("left_11.png"));
+			background = ImageIO.read(new File("background.png"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

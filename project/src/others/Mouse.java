@@ -17,7 +17,7 @@ public class Mouse extends Thread{
 		// TODO Auto-generated method stub
 		BufferedImage bg;
 		try {
-			bg = ImageIO.read(new File("tile-a0.png"));
+			bg = ImageIO.read(new File("background2.png"));
 			Mouse m = new Mouse(new Game(bg));
 			m.start();
 			try {

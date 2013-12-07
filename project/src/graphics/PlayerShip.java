@@ -20,7 +20,7 @@ public enum PlayerShip {
 		this.id=id;
 		this.life=life;
 		try {
-			sprite = ImageIO.read(new File("playership_"+id));
+			sprite = ImageIO.read(new File("playership_"+id+".png"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -1,10 +1,13 @@
 package graphics;
 
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 public class Player {
 
@@ -21,6 +24,8 @@ public class Player {
 	public Player(String name,int playershipID)
 	{
 		this.name=name;
+		x = 190;
+		y = 400;
 		life = 10000;
 		score = 0;
 		upgrades = new int[5];
