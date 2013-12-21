@@ -1,45 +1,76 @@
 package server;
 
-import java.io.BufferedReader;
+import game.BackgroundDisplay;
+import graphics.Player;
+
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class Server extends Thread {
+import javax.swing.JFrame;
 
-	private Socket connectionSocket;
+/**
+ * Class Server qui permet au J1 d'hoster la partie sur laquelle il attend le J2.
+ * Les deux joueurs s'échangent à intervalle réguliers les informations permettant
+ * de reconstruire l'environnement de l'un chez l'autre.
+ * @author Florian
+ *
+ */
+public class Server {
 
-	Server()
+	private Player player;
+	private int x,y;
+	private int size=2;
+
+	public Server(Player p) throws IOException
 	{
+		player = p;
 	}
 
-	public void run()
+	/**
+	 * Constructeur par défaut de la classe Server
+	 */
+	public Server()
 	{
-		String clientSentence;
-		String capitalizedSentence;	
-		BufferedReader inFromClient;
-		try {
-			inFromClient = new	BufferedReader(new	InputStreamReader(connectionSocket.getInputStream()));
-			DataOutputStream	outToClient	=new	DataOutputStream(	connectionSocket.getOutputStream());	//	flux sortant	
-			clientSentence	=	inFromClient.readLine();	//	lecture	depuis	le	client	
-			String delims = "[ ]+";
-			String[] tokens = clientSentence.split(delims);
-			//capitalizedSentence	=	clientSentence.toUpperCase()	+	'\n';
-			Integer sum = Integer.parseInt(tokens[0])+Integer.parseInt(tokens[1]);
-			capitalizedSentence = String.valueOf(sum) + '\n';
-			outToClient.writeBytes(capitalizedSentence);
-			//outToClient.writeBytes(capitalizedSentence);	//	Ã©criture	vers	le	client	
-			connectionSocket.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	//	flux	entrant
-
+		
 	}
 	
-	public void setSocket(Socket s)
+	/**
+	 * Méthode appelée dans le run.
+	 * Elle attribue une socket entre le client du J2 et le Server sur un port à préciser.
+	 */
+	public void run()
 	{
-		connectionSocket = s;
+		ServerSocket connectionSocket;
+		int clientSentence1, clientSentence2,size;
+		try {
+			connectionSocket = new ServerSocket(6789);
+			Socket socket = connectionSocket.accept();
+			DataInputStream inFromClient = new	DataInputStream(socket.getInputStream());	
+
+			while(true)
+			{
+				size = inFromClient.readInt();
+				clientSentence1	=	inFromClient.readInt();	//	lecture	depuis	le	client	
+				clientSentence2 = inFromClient.readInt();	
+				System.out.println(size + " ; " + clientSentence1 + " ; " + clientSentence2);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Main...
+	 * @param args
+	 */
+	public static void main(String args[])
+	{
+		new Server().run();
 	}
 }

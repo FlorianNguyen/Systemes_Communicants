@@ -1,22 +1,87 @@
 package graphics;
 
+/**
+ * Bullet représente un BulletType a une position donnée à l'instant t,
+ * une direction et une vitesse données. L'ID permet d'associer à un Bullet
+ * son BulletType.
+ * @author Florian
+ *
+ */
 public class Bullet {
 
-	public BulletType bt;
+	public int id;
 	public int x,y,dx,dy;
+	boolean isVisible;
 	
-	public Bullet(BulletType bt0,int x0, int y0, int dx0, int dy0)
+	/**
+	 * Constructeur par défaut de Bullet
+	 * @param x0 Abscisse du Bullet à la création
+	 * @param y0 Ordonnée du Bullet à la création
+	 * @param dx0 Vitesse de progression selon x (algébrique)
+	 * @param dy0 Vitesse de progression selon y (algébrique)
+	 */
+	public Bullet(int no, int x0, int y0, int dx0, int dy0)
 	{
-		bt=bt0;
+		id=no;
 		x=x0;
 		y=y0;
 		dx=dx0;
 		dy=dy0;
+		isVisible=false;
 	}
 	
+	/**
+	 * Met à jour les positions du Bullet grâce à une incrémentation de x et y
+	 */
 	public void update()
 	{
 		x+=dx;
 		y+=dy;
+	}
+	
+	public boolean isVisible()
+	{
+		return isVisible;
+	}
+	
+	public void setVisible(boolean b)
+	{
+		isVisible = b;
+	}
+	
+	public int getX()
+	{
+		return x;
+	}
+	
+	public int getY()
+	{
+		return y;
+	}
+	
+	public int getDX()
+	{
+		return dx;
+	}
+	
+	public int getDY()
+	{
+		return dy;
+	}
+	
+	public void setXY(int x,int y)
+	{
+		this.x=x;
+		this.y=y;
+	}
+	
+	public void reset()
+	{
+		x=0;
+		y=0;
+		dx=0;
+		dy=0;
+		isVisible=false;
+		id=0;
 	}
 }

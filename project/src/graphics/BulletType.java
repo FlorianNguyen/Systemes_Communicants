@@ -7,15 +7,14 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 /**
- * BulletType est un concept qui sert à définir la notion de type de munitions, 
- * autant pour les ennemis que les joueurs.
+ * Classe BulletType définissant le type de munitions utilisées par un Ship, un Player...
  * Les munitions seront caractérisées par un ID, des dommages, et éventuellement une vitesse propre.
  * @author Florian
  *
  */
 public enum BulletType {
-	BASIC_ONE(0,100,2),
-	BASIC_TWO(1,150,2);
+	BASIC_ENNEMY(0,100,2),
+	BASIC_PLAYER(1,150,2);
 	
 	private int id,damage,speed;
 	private BufferedImage sprite;
@@ -31,24 +30,12 @@ public enum BulletType {
 		this.id=id;
 		this.damage=damage;
 		this.speed=speed;
-		if(id==0)
-		{
 			try {
-				sprite = ImageIO.read(new File("projectile_basic.png"));
+				sprite = ImageIO.read(new File("projectile_basic"+id+".png"));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
-		else if(id==1)
-		{
-			try {
-				sprite = ImageIO.read(new File("projectile_basic.png"));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 		
 	}
 
@@ -59,6 +46,16 @@ public enum BulletType {
 	public int getID()
 	{
 		return id;
+	}
+	
+	public static BulletType getFromID(int id)
+	{
+		switch(id)
+		{
+		case 0 : return BASIC_ENNEMY;
+		case 1 : return BASIC_PLAYER;
+		default : return BASIC_PLAYER;
+		}
 	}
 	
 	/**

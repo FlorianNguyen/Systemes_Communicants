@@ -4,9 +4,11 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 /**
@@ -21,12 +23,13 @@ public class Player {
 	public static BufferedImage avatar; // sprite du vaisseau joueur
 	public String name; // pseudo du joueur
 	public float score; // score du joueur
-	public int[] upgrades; // armes et bonus rang�s dans un tableau
+	public int[] upgrades; // armes et bonus ranges dans un tableau
 	public int life; // points de vie du joueur
 	public int x,y; // position du joueur
-	public PlayerShip pShip; // mod�le de vaisseau du joueur
-	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}}; 
-						// dommages par d�faut en fonction du niveau d'am�lioration
+	public PlayerShip pShip; // modele de vaisseau du joueur
+	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}};
+						// dommages par defaut en fonction du niveau d'amelioration
+	public ArrayList<Bullet> balls = new ArrayList<Bullet>();
 
 	/**
 	 * Constructeur de la classe Player.
@@ -127,5 +130,21 @@ public class Player {
 	public int getLife()
 	{
 		return life;
+	}
+	
+	public void primaryShooting(ArrayList<Bullet> available, ArrayList<Bullet> used,JPanel panel)
+	{
+		if(upgrades[0]==0)
+		{
+
+		}
+		if(upgrades[1]==1)
+		{
+			
+		}
+		if(upgrades[2]==2)
+		{
+			
+		}
 	}
 }
