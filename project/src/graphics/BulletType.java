@@ -13,10 +13,10 @@ import javax.imageio.ImageIO;
  *
  */
 public enum BulletType {
-	BASIC_ENNEMY(0,100,2),
-	BASIC_PLAYER(1,150,2);
+	BASIC_ENNEMY(0,100,2,20),
+	BASIC_PLAYER(1,150,2,15);
 	
-	private int id,damage,speed;
+	private int id,damage,speed,reloadTime;
 	private BufferedImage sprite;
 	
 	/**
@@ -25,11 +25,12 @@ public enum BulletType {
 	 * @param damage Dommages du type de munitions
 	 * @param speed Vitesse des balles
 	 */
-	private BulletType(int id,int damage,int speed)
+	private BulletType(int id,int damage,int speed,int reload)
 	{
 		this.id=id;
 		this.damage=damage;
 		this.speed=speed;
+		this.reloadTime=reload;
 			try {
 				sprite = ImageIO.read(new File("projectile_basic"+id+".png"));
 			} catch (IOException e) {
@@ -46,6 +47,11 @@ public enum BulletType {
 	public int getID()
 	{
 		return id;
+	}
+	
+	public int getReloadTime()
+	{
+		return reloadTime;
 	}
 	
 	public static BulletType getFromID(int id)

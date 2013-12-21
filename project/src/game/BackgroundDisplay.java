@@ -1,6 +1,9 @@
 package game;
 import graphics.Bullet;
+import graphics.BulletType;
+import graphics.Ennemy;
 import graphics.Player;
+import graphics.Ship;
 
 import java.awt.AWTException;
 import java.awt.Component;
@@ -18,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -36,22 +40,31 @@ import javax.swing.Timer;
 public class BackgroundDisplay extends JPanel implements ActionListener {
 
 	Player player;
+	public static final int DEFAULT_FPS=16;
 	static final int RELOADTIME = 50;
 	public BufferedImage background;
-	public int height,width;
+	public int height,width,level,wave;
 	public int Y;
 	public JFrame frame;
-	public Timer t = new Timer(16,this);
+	Ennemy medium;
+	public Timer t = new Timer(DEFAULT_FPS,this);
 	public Timer reloadTimer = new Timer(RELOADTIME,this);
 	public ArrayList<Bullet> availableBalls = new ArrayList<Bullet>(100);
 	public ArrayList<Bullet> usedBalls = new ArrayList<Bullet>(100);
-	
-/**
- * Constructeur de la classe BackgroundDisplay.
- * @param f JFrame dans lequel l'on souhaite réaliser l'affichage.
- * @param sourcename Source du fichier image (png) qui sera utilisé en fond d'écran.
- * L'image doit être cyclique, c'est à dire que la partie haute et la partie basse sont compatibles.
- */
+	public static final int[][][] levels = 
+		{
+		{{2,0,0},{2,0,0},{0,3,0}}, //niveau 1
+		{{3,0,0},{3,0,0},{0,3,0}}, //niveau 2
+		{{3,0,0},{3,0,0},{0,3,0}}, //niveau 3
+		{{3,0,0},{3,0,0},{0,3,0}}  // etc
+		};
+
+	/**
+	 * Constructeur de la classe BackgroundDisplay.
+	 * @param f JFrame dans lequel l'on souhaite réaliser l'affichage.
+	 * @param sourcename Source du fichier image (png) qui sera utilisé en fond d'écran.
+	 * L'image doit être cyclique, c'est à dire que la partie haute et la partie basse sont compatibles.
+	 */
 	public BackgroundDisplay(String name,int id,String sourcename)
 	{
 		try {
@@ -61,12 +74,19 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			background = ImageIO.read(new File(sourcename));
 			height = background.getHeight();
 			width = background.getWidth();
+			level=1;
+			wave=1;
+			
+			//Pool de balles
 			for(Bullet b:availableBalls)
 			{
 				b = new Bullet(0,0,0,0,0);
 			}
 			setLayout(new OverlayLayout(this));
 			t.start();
+
+			// Ennemi test
+			medium = new Ennemy(background.getWidth()/2,80,BulletType.BASIC_ENNEMY,Ship.ENNEMY_MEDIUM0);
 			
 			//Options du JFrame
 			frame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
@@ -83,19 +103,38 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			e.printStackTrace();
 		}
 	}
-/**
- * Méthode utilisée par défaut par JPanel.
- */
+	
+	/**
+	 * Méthode utilisée par défaut par JPanel.
+	 */
 	public void paint(Graphics g) {
 		super.paint(g);
 		Y+=1;
 		for(int i=(Y%background.getHeight())-background.getHeight();i<background.getHeight();i+=background.getHeight()) {
 			g.drawImage(background,0,i,this);
-			g.drawImage(
-					player.getSprite(),
-					player.getX()-(int)player.getSprite().getWidth()/2,
-					player.getY()-(int)player.getSprite().getHeight()/2+32, //centrage sur la hit-case
-					this);
+		}
+		
+		g.drawImage(
+				medium.getShip().getSprite(),
+				medium.getX()-(int)medium.getShip().getSprite().getWidth()/2,
+				medium.getY()-(int)medium.getShip().getSprite().getHeight()/2,
+				this);
+		
+		g.drawImage(
+				player.getSprite(),
+				player.getX()-(int)player.getSprite().getWidth()/2,
+				player.getY()-(int)player.getSprite().getHeight()/2+32, //centrage sur la hit-case
+				this);
+		
+		for(Bullet b:usedBalls)
+		{
+			g.drawImage(b.getSprite(),b.getX(),b.getY(),this);
+			if(this.isInScreen(b))
+			{
+				b.setVisible(false);
+				availableBalls.add(b);
+				usedBalls.remove(b);
+			}
 		}
 		g.dispose();
 	}
@@ -120,7 +159,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 		}
 		return p;
 	}
-	
+
 	/**
 	 * Renvoie la hauteur de l'image servant de background, et donc du background.  
 	 */
@@ -135,18 +174,5 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	public int getWidth()
 	{
 		return width;
-	}
-	
-	public void cleanBalls(){
-		for(Bullet e: usedBalls)
-		{
-			if(!this.isInScreen(e))
-			{
-				e.setVisible(false);
-				e.reset();
-				usedBalls.remove(e);
-				availableBalls.add(e);
-			}
-		}
 	}
 }

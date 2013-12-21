@@ -1,5 +1,11 @@
 package graphics;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+
+import javax.swing.Timer;
+
 /**
  * Bullet représente un BulletType a une position donnée à l'instant t,
  * une direction et une vitesse données. L'ID permet d'associer à un Bullet
@@ -7,11 +13,12 @@ package graphics;
  * @author Florian
  *
  */
-public class Bullet {
+public class Bullet implements ActionListener {
 
 	public int id;
 	public int x,y,dx,dy;
 	boolean isVisible;
+	Timer timer;
 	
 	/**
 	 * Constructeur par défaut de Bullet
@@ -28,6 +35,8 @@ public class Bullet {
 		dx=dx0;
 		dy=dy0;
 		isVisible=false;
+		timer = new Timer(BulletType.getFromID(id).getReloadTime(),this);
+		timer.start();
 	}
 	
 	/**
@@ -69,6 +78,11 @@ public class Bullet {
 		return dy;
 	}
 	
+	public BufferedImage getSprite()
+	{
+		return BulletType.getFromID(id).getSprite();
+	}
+	
 	public void setXY(int x,int y)
 	{
 		this.x=x;
@@ -77,11 +91,19 @@ public class Bullet {
 	
 	public void reset()
 	{
+		timer.stop();
+		timer.restart();
 		x=0;
 		y=0;
 		dx=0;
 		dy=0;
 		isVisible=false;
 		id=0;
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent arg0) 
+	{
+		update();
 	}
 }
