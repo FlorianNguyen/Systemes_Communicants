@@ -40,6 +40,8 @@ import javax.swing.Timer;
 public class BackgroundDisplay extends JPanel implements ActionListener {
 
 	Player player;
+	public static final int LOWERLIMIT = 40;
+	public static final int RIGHTLIMIT = 5;
 	public static final int DEFAULT_FPS=16;
 	static final int RELOADTIME = 50;
 	public BufferedImage background;
@@ -47,10 +49,10 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	public int Y;
 	public JFrame frame;
 	Ennemy medium;
-	public Timer t = new Timer(DEFAULT_FPS,this);
-	public Timer reloadTimer = new Timer(RELOADTIME,this);
 	public ArrayList<Bullet> availableBalls = new ArrayList<Bullet>(100);
 	public ArrayList<Bullet> usedBalls = new ArrayList<Bullet>(100);
+	public Timer t = new Timer(DEFAULT_FPS,this);
+	public Timer reloadTimer = new Timer(RELOADTIME,this);
 	public static final int[][][] levels = 
 		{
 		{{2,0,0},{2,0,0},{0,3,0}}, //niveau 1
@@ -77,6 +79,8 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			level=1;
 			wave=1;
 			
+			System.out.println(width + "      " + height);
+
 			//Pool de balles
 			for(Bullet b:availableBalls)
 			{
@@ -87,12 +91,12 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 
 			// Ennemi test
 			medium = new Ennemy(background.getWidth()/2,80,BulletType.BASIC_ENNEMY,Ship.ENNEMY_MEDIUM0);
-			
+
 			//Options du JFrame
 			frame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
 					new BufferedImage(16,16,BufferedImage.TYPE_INT_ARGB),
 					new Point(0,0),"Blank cursor"));
-			frame.setSize(this.getWidth(),(int)(this.getHeight()*0.75));
+			frame.setSize(this.getWidth(),(int)(this.getHeight()*1));
 			frame.setLocationRelativeTo(null);
 			frame.setVisible(true);
 			frame.add(this);
@@ -103,7 +107,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Méthode utilisée par défaut par JPanel.
 	 */
@@ -113,23 +117,24 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 		for(int i=(Y%background.getHeight())-background.getHeight();i<background.getHeight();i+=background.getHeight()) {
 			g.drawImage(background,0,i,this);
 		}
-		
+
 		g.drawImage(
 				medium.getShip().getSprite(),
 				medium.getX()-(int)medium.getShip().getSprite().getWidth()/2,
 				medium.getY()-(int)medium.getShip().getSprite().getHeight()/2,
 				this);
-		
+
 		g.drawImage(
 				player.getSprite(),
 				player.getX()-(int)player.getSprite().getWidth()/2,
 				player.getY()-(int)player.getSprite().getHeight()/2+32, //centrage sur la hit-case
 				this);
-		
+
 		for(Bullet b:usedBalls)
 		{
+			b.update();
 			g.drawImage(b.getSprite(),b.getX(),b.getY(),this);
-			if(this.isInScreen(b))
+			if(!this.isInScreen(b))
 			{
 				b.setVisible(false);
 				availableBalls.add(b);
@@ -145,8 +150,35 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Point point = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(point, this);
-		System.out.println(player.x + "      " + player.y); //375 525
-		player.setXY(point.x,point.y);
+		//System.out.println(point.x + "      " + point.y); //375 525
+		if(point.x>0 && point.x<background.getWidth()-RIGHTLIMIT && point.y>0 && point.y<background.getHeight()-LOWERLIMIT)
+		{
+			player.setXY(point.x,point.y);
+		}
+		else if(point.x<0)
+		{
+			if(point.y<0){player.setXY(0,0);}
+			else if(point.y>background.getHeight()-LOWERLIMIT){player.setXY(0,background.getHeight()-LOWERLIMIT);}
+			else player.setXY(0,point.y);
+		}
+		else if(point.x>background.getWidth()-RIGHTLIMIT)
+		{
+			if(point.y<0){player.setXY(background.getWidth()-RIGHTLIMIT,0);}
+			else if(point.y>background.getHeight()-LOWERLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
+			else player.setXY(background.getWidth()-RIGHTLIMIT,point.y);
+		}
+		else if(point.y<0)
+		{
+			if(point.x<0){player.setXY(0, 0);}
+			else if(point.x>background.getWidth()-RIGHTLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,0);}
+			else player.setXY(point.x,0);
+		}
+		else if(point.y>background.getHeight()-LOWERLIMIT)
+		{
+			if(point.x<0){player.setXY(0,background.getHeight()-LOWERLIMIT);}
+			else if(point.x>background.getWidth()-RIGHTLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
+			else player.setXY(point.x,background.getHeight()-LOWERLIMIT);
+		}
 		repaint();
 	}
 

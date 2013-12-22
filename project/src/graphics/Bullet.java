@@ -58,6 +58,11 @@ public class Bullet implements ActionListener {
 		isVisible = b;
 	}
 	
+	public void setID(int id)
+	{
+		this.id = id;
+	}
+	
 	public int getX()
 	{
 		return x;
@@ -87,6 +92,12 @@ public class Bullet implements ActionListener {
 	{
 		this.x=x;
 		this.y=y;
+	}
+	
+	public void setDXDY(int x,int y)
+	{
+		this.dx=x;
+		this.dy=y;
 	}
 	
 	public void reset()
