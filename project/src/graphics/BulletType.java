@@ -13,8 +13,10 @@ import javax.imageio.ImageIO;
  *
  */
 public enum BulletType {
-	BASIC_ENNEMY(0,100,2,20),
-	BASIC_PLAYER(1,150,2,15);
+	BASIC_ENNEMY1(1,100,2,20),
+	BASIC_ENNEMY2(2,100,2,40),
+	BASIC_MEDIUM(3,100,2,60),
+	BASIC_PLAYER(0,150,2,16);
 	
 	private int id,damage,speed,reloadTime;
 	private BufferedImage sprite;
@@ -58,8 +60,10 @@ public enum BulletType {
 	{
 		switch(id)
 		{
-		case 0 : return BASIC_ENNEMY;
-		case 1 : return BASIC_PLAYER;
+		case 1 : return BASIC_ENNEMY1;
+		case 2 : return BASIC_ENNEMY2;
+		case 3 : return BASIC_MEDIUM;
+		case 0 : return BASIC_PLAYER;
 		default : return BASIC_PLAYER;
 		}
 	}
