@@ -1,10 +1,13 @@
 package graphics;
 
+import game.BallManagement;
+
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -30,6 +33,7 @@ public class Player {
 	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}};
 						// dommages par defaut en fonction du niveau d'amelioration
 	public ArrayList<Bullet> balls = new ArrayList<Bullet>();
+	public Semaphore shootSem = new Semaphore(1);
 
 	/**
 	 * Constructeur de la classe Player.
@@ -132,19 +136,42 @@ public class Player {
 		return life;
 	}
 	
-	public void primaryShooting(ArrayList<Bullet> available, ArrayList<Bullet> used,JPanel panel)
+	public void primaryShooting(BallManagement bm)
 	{
 		if(upgrades[0]==0)
 		{
-
+			try {
+				shootSem.acquire();
+				bm.acquirePB(x,y,0,5,BulletType.BASIC_PLAYER.getID());
+				this.wait(BulletType.BASIC_PLAYER.getReloadTime());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		if(upgrades[1]==1)
+		else if(upgrades[1]==1)
 		{
-			
+			try {
+				bm.acquirePB(x-2,y,0,5,BulletType.BASIC_PLAYER.getID());
+				bm.acquirePB(x+2,y,0,5,BulletType.BASIC_PLAYER.getID());
+				this.wait(BulletType.BASIC_PLAYER.getReloadTime());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		if(upgrades[2]==2)
+		else if(upgrades[2]==2)
 		{
-			
+			try {
+				bm.acquirePB(x-3,y-2,0,5,BulletType.BASIC_PLAYER.getID());
+				bm.acquirePB(x+3,y-2,0,5,BulletType.BASIC_PLAYER.getID());
+				bm.acquirePB(x,y+1,0,5,BulletType.BASIC_PLAYER.getID());
+				this.wait(BulletType.BASIC_PLAYER.getReloadTime());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		shootSem.release();
 	}
 }

@@ -48,6 +48,15 @@ public class Bullet implements ActionListener {
 		y+=dy;
 	}
 	
+	public void set(int x, int y, int dx, int dy, int btID)
+	{
+		this.x=x;
+		this.y=y;
+		this.dx=dx;
+		this.dy=dy;
+		this.id = btID;
+	}
+	
 	public boolean isVisible()
 	{
 		return isVisible;

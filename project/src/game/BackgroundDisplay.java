@@ -37,8 +37,9 @@ import javax.swing.Timer;
  * @author Florian Nguyen
  *
  */
-public class BackgroundDisplay extends JPanel implements ActionListener {
+public class BackgroundDisplay extends JPanel implements ActionListener, MouseListener {
 
+	public Semaphore shootSem = new Semaphore(1);
 	Player player;
 	public static final int LOWERLIMIT = 40;
 	public static final int RIGHTLIMIT = 5;
@@ -51,8 +52,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	public JFrame frame;
 	//public Enemy medium;
 	public ArrayList<Enemy> enemies = new ArrayList<Enemy>(0);
-	public ArrayList<Bullet> availableBalls = new ArrayList<Bullet>(100);
-	public ArrayList<Bullet> usedBalls = new ArrayList<Bullet>(100);
+	public BallManagement balls;
 	public Timer t = new Timer(DEFAULT_FPS,this);
 	public Timer reloadTimer = new Timer(RELOADTIME,this);
 	public static final int[][][] levels = 
@@ -80,18 +80,18 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			width = background.getWidth();
 			level=1;
 			wave=1;
-//			dx=0;
-//			dy=0;
-			
+			//balls = new BallManagement();
+			//			dx=0;
+			//			dy=0;
+
 			System.out.println(width + "      " + height);
 
 			//Pool de balles
-			for(Bullet b:availableBalls)
-			{
-				b = new Bullet(0,0,0,0,0);
-			}
-			setLayout(new OverlayLayout(this));
-			t.start();
+			//			for(Bullet b:availableBalls)
+			//			{
+			//				b = new Bullet(0,0,0,0,0);
+			//			}
+			//			setLayout(new OverlayLayout(this));
 
 			// Ennemi test
 			enemies.add(new Enemy(background.getWidth()/2-Ship.ENNEMY_MEDIUM0.getSprite().getWidth()/2,80,BulletType.BASIC_MEDIUM,Ship.ENNEMY_MEDIUM0));
@@ -107,6 +107,9 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			frame.add(this);
 			frame.setResizable(false);
 			frame.setLocationRelativeTo(null);
+			
+			//Lancement du timer
+			t.start();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -123,36 +126,41 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			g.drawImage(background,0,i,this);
 		}
 
-//		g.drawImage(
-//				medium.getShip().getSprite(),
-//				medium.getX()-(int)medium.getShip().getSprite().getWidth()/2,
-//				medium.getY()-(int)medium.getShip().getSprite().getHeight()/2,
-//				this);
+		//		g.drawImage(
+		//				medium.getShip().getSprite(),
+		//				medium.getX()-(int)medium.getShip().getSprite().getWidth()/2,
+		//				medium.getY()-(int)medium.getShip().getSprite().getHeight()/2,
+		//				this);
 
 		for(Enemy e:enemies)
 		{
 			g.drawImage(e.getShip().getSprite(),e.getX(),e.getY(),this);
 		}
 		
-		for(Bullet b:usedBalls)
-		{
-			b.update();
-			g.drawImage(b.getSprite(),b.getX(),b.getY(),this);
-			if(!this.isInScreen(b))
-			{
-				b.setVisible(false);
-				availableBalls.add(b);
-				usedBalls.remove(b);
-			}
-		}
-		
+//		for(Bullet b:balls.getBalls())
+//		{
+//			g.drawImage(b.getSprite(),b.getX(),b.getY(),this);
+//		}
+
+		//		for(Bullet b:usedBalls)
+		//		{
+		//			b.update();
+		//			g.drawImage(b.getSprite(),b.getX(),b.getY(),this);
+		//			if(!this.isInScreen(b))
+		//			{
+		//				b.setVisible(false);
+		//				availableBalls.add(b);
+		//				usedBalls.remove(b);
+		//			}
+		//		}
+
 		g.drawImage(
 				player.getSprite(),
 				player.getX()-(int)player.getSprite().getWidth()/2,
 				player.getY()-(int)player.getSprite().getHeight()/2+32, //centrage sur la hit-case
 				this);
-		
 		g.dispose();
+		//repaint();
 	}
 
 	/**
@@ -161,8 +169,8 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Point point = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(point, this);
-//		dx=player.getX();
-//		dy=player.getY();
+		//		dx=player.getX();
+		//		dy=player.getY();
 		if(point.x>0 && point.x<background.getWidth()-RIGHTLIMIT && point.y>0 && point.y<background.getHeight()-LOWERLIMIT)
 		{
 			player.setXY(point.x,point.y);
@@ -191,9 +199,9 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			else if(point.x>background.getWidth()-RIGHTLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
 			else player.setXY(point.x,background.getHeight()-LOWERLIMIT);
 		}
-//		dx=player.getX()-dx;
-//		dy=player.getY()-dy;
-//		System.out.println(dx + "      " + dy);
+		//		dx=player.getX()-dx;
+		//		dy=player.getY()-dy;
+		//		System.out.println(dx + "      " + dy);
 		repaint();
 	}
 
@@ -222,7 +230,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	{
 		return width;
 	}
-	
+
 	public void nextLevel()
 	{
 		if(enemies.size()==0 && wave==levels[level].length)
@@ -232,7 +240,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			addEnemies(Enemy.spawn(levels[level][wave]));
 		}
 	}
-	
+
 	public void nextWave()
 	{
 		if(wave<levels[level].length)
@@ -240,12 +248,52 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			wave++;
 		}
 	}
-	
+
 	public void addEnemies(ArrayList<Enemy> input)
 	{
 		for(int i=0;i<input.size();i++)
 		{
 			enemies.add(input.get(i));
 		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		try {
+			shootSem.acquire();
+			player.primaryShooting(balls);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally
+		{
+			shootSem.release();	
+		}
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
 	}
 }
