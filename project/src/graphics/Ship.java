@@ -6,14 +6,23 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+/**
+ * Classe Ship définissant les types de vaisseaux pouvant constituer les Enemy.
+ * @author Florian
+ *
+ */
 public enum Ship {
 	BASIC_CRUISER(0,500),
 	ENNEMY_MEDIUM0(0,5000);
 
 	public BufferedImage sprite;
 	public int id,life;
-	public boolean isAlive;
 
+	/**
+	 * Constructeur par défaut de Ship
+	 * @param id ID du ship
+	 * @param life Points de vie du Ship
+	 */
 	private Ship(int id, int life)
 	{
 		try {
@@ -26,23 +35,30 @@ public enum Ship {
 		}
 	}
 
+	/**
+	 * Retourne l'ID du Ship
+	 * @return
+	 */
 	public int getID()
 	{
 		return id;
 	}
 
+	/**
+	 * Retourne les points de vie maximum du ship
+	 * @return
+	 */
 	public int getLife()
 	{
 		return life;
 	}
 
+	/**
+	 * Retourne le sprite du Ship
+	 * @return le sprite du Ship
+	 */
 	public BufferedImage getSprite()
 	{
 		return sprite;
-	}
-
-	public boolean isAlive()
-	{
-		return isAlive;
 	}
 }

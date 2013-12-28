@@ -37,7 +37,7 @@ import javax.swing.Timer;
  * @author Florian Nguyen
  *
  */
-public class BackgroundDisplay extends JPanel implements ActionListener, MouseListener {
+public class BackgroundDisplay extends JPanel implements ActionListener {
 
 	public Semaphore shootSem = new Semaphore(1);
 	Player player;
@@ -50,9 +50,10 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 	//public int dx,dy;
 	public int Y;
 	public JFrame frame;
-	//public Enemy medium;
-	public ArrayList<Enemy> enemies = new ArrayList<Enemy>(0);
+	public Mouse mouse = new Mouse();
 	public BallManagement balls;
+	public long lastShotTime;
+	public ArrayList<Enemy> enemies = new ArrayList<Enemy>(0);
 	public Timer t = new Timer(DEFAULT_FPS,this);
 	public Timer reloadTimer = new Timer(RELOADTIME,this);
 	public static final int[][][] levels = 
@@ -69,33 +70,23 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 	 * @param sourcename Source du fichier image (png) qui sera utilisé en fond d'écran.
 	 * L'image doit être cyclique, c'est à dire que la partie haute et la partie basse sont compatibles.
 	 */
-	public BackgroundDisplay(String name,int id,String sourcename)
+	public BackgroundDisplay(String name,int id, BallManagement balls,String sourcename)
 	{
 		try {
 			//Initialisations
 			player = new Player(name,id);
 			frame = new JFrame();
+			frame.addMouseListener(mouse);
 			background = ImageIO.read(new File(sourcename));
 			height = background.getHeight();
 			width = background.getWidth();
 			level=1;
 			wave=1;
-			//balls = new BallManagement();
-			//			dx=0;
-			//			dy=0;
-
-			System.out.println(width + "      " + height);
-
-			//Pool de balles
-			//			for(Bullet b:availableBalls)
-			//			{
-			//				b = new Bullet(0,0,0,0,0);
-			//			}
-			//			setLayout(new OverlayLayout(this));
+			this.balls=balls;
+			lastShotTime = System.currentTimeMillis();
 
 			// Ennemi test
-			enemies.add(new Enemy(background.getWidth()/2-Ship.ENNEMY_MEDIUM0.getSprite().getWidth()/2,80,BulletType.BASIC_MEDIUM,Ship.ENNEMY_MEDIUM0));
-			//medium = new Enemy(background.getWidth()/2,80,BulletType.BASIC_MEDIUM,Ship.ENNEMY_MEDIUM0);
+			enemies.add(new Enemy(background.getWidth()/2,80,BulletType.BASIC_MEDIUM,Ship.ENNEMY_MEDIUM0));
 
 			//Options du JFrame
 			frame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
@@ -107,7 +98,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 			frame.add(this);
 			frame.setResizable(false);
 			frame.setLocationRelativeTo(null);
-			
+
 			//Lancement du timer
 			t.start();
 		} catch (IOException e) {
@@ -126,21 +117,40 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 			g.drawImage(background,0,i,this);
 		}
 
-		//		g.drawImage(
-		//				medium.getShip().getSprite(),
-		//				medium.getX()-(int)medium.getShip().getSprite().getWidth()/2,
-		//				medium.getY()-(int)medium.getShip().getSprite().getHeight()/2,
-		//				this);
-
 		for(Enemy e:enemies)
 		{
-			g.drawImage(e.getShip().getSprite(),e.getX(),e.getY(),this);
+			g.drawImage(
+					e.getSprite(),
+					e.getSpriteX(),
+					e.getSpriteY(),
+					this);
 		}
-		
-//		for(Bullet b:balls.getBalls())
-//		{
-//			g.drawImage(b.getSprite(),b.getX(),b.getY(),this);
-//		}
+
+		//System.out.println(balls.isEmpty());
+		if(!balls.isEmpty())
+		{
+			int[][] toDraw = balls.getBalls();
+			for(int i=0;i<toDraw.length;i++)
+			{
+				g.drawImage(BulletType.getFromID(toDraw[i][4]).getSprite(),toDraw[i][0],toDraw[i][1],this);
+				if(!isInScreen(toDraw[i][0],toDraw[i][1],toDraw[i][4]))
+				{
+					try {
+						balls.pSem.acquire();
+						int j = balls.playerUsed[i];
+						balls.playerUsed = balls.remove(balls.playerUsed, i);
+						balls.playerAvailable = balls.add(balls.playerAvailable,j,0);
+						balls.playerSemaphore.release();
+						balls.pSem.release();
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+				
+			}
+			
+		}
 
 		//		for(Bullet b:usedBalls)
 		//		{
@@ -156,11 +166,10 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 
 		g.drawImage(
 				player.getSprite(),
-				player.getX()-(int)player.getSprite().getWidth()/2,
-				player.getY()-(int)player.getSprite().getHeight()/2+32, //centrage sur la hit-case
+				player.getSpriteX(),
+				player.getSpriteY(), //centrage souris sur la hit-case
 				this);
 		g.dispose();
-		//repaint();
 	}
 
 	/**
@@ -189,7 +198,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 		}
 		else if(point.y<0)
 		{
-			if(point.x<0){player.setXY(0, 0);}
+			if(point.x<0){player.setXY(0,0);}
 			else if(point.x>background.getWidth()-RIGHTLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,0);}
 			else player.setXY(point.x,0);
 		}
@@ -199,16 +208,45 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 			else if(point.x>background.getWidth()-RIGHTLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
 			else player.setXY(point.x,background.getHeight()-LOWERLIMIT);
 		}
-		//		dx=player.getX()-dx;
-		//		dy=player.getY()-dy;
-		//		System.out.println(dx + "      " + dy);
+
+		if(!balls.isEmpty())
+		{
+			for(int a:balls.playerUsed)
+			{
+				System.out.println(balls.playerBalls[a][0]);
+				balls.update(
+						balls.playerBalls[a][2], 
+						balls.playerBalls[a][3],
+						a);
+//				balls.playerBalls[a][0]=balls.playerBalls[a][0]+balls.playerBalls[a][2];
+//				balls.playerBalls[a][1]+=balls.playerBalls[a][2];
+				System.out.println(balls.playerBalls[a][0]);
+			}
+		}
+		if(mouse.mouseDown==true && System.currentTimeMillis()-lastShotTime>100)
+		{
+			lastShotTime=System.currentTimeMillis();
+			player.primaryShooting(balls);
+		}
 		repaint();
 	}
 
+	public boolean isInScreen(int x, int y, int id)
+	{
+		boolean p=true;
+		if(x<-BulletType.getFromID(id).getSprite().getWidth()||x>background.getWidth()+BulletType.getFromID(id).getSprite().getWidth()||
+				y<-BulletType.getFromID(id).getSprite().getHeight()||y>background.getHeight()+BulletType.getFromID(id).getSprite().getHeight())
+		{
+			p=false;
+		}
+		return p;
+	}
+	
 	public boolean isInScreen(Bullet b)
 	{
 		boolean p=true;
-		if(b.getX()<0||b.getX()>background.getWidth()||b.getY()<0||b.getY()>background.getHeight())
+		if(b.getX()<-b.getSprite().getWidth()||b.getX()>background.getWidth()+b.getSprite().getWidth()||
+				b.getY()<-b.getSprite().getHeight()||b.getY()>background.getHeight()+b.getSprite().getHeight())
 		{
 			p=false;
 		}
@@ -255,45 +293,5 @@ public class BackgroundDisplay extends JPanel implements ActionListener, MouseLi
 		{
 			enemies.add(input.get(i));
 		}
-	}
-
-	@Override
-	public void mouseClicked(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		try {
-			shootSem.acquire();
-			player.primaryShooting(balls);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		finally
-		{
-			shootSem.release();	
-		}
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseExited(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mousePressed(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-
 	}
 }

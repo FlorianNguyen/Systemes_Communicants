@@ -16,7 +16,7 @@ import javax.swing.Timer;
 public class Bullet implements ActionListener {
 
 	public int id;
-	public int x,y,dx,dy;
+	public int x,y,X,Y,dx,dy;
 	boolean isVisible;
 	Timer timer;
 	
@@ -31,7 +31,9 @@ public class Bullet implements ActionListener {
 	{
 		id=no;
 		x=x0;
+		X=x0-BulletType.getFromID(no).getSprite().getWidth()/2;
 		y=y0;
+		Y=x0-BulletType.getFromID(no).getSprite().getHeight()/2;
 		dx=dx0;
 		dy=dy0;
 		isVisible=false;
@@ -46,12 +48,16 @@ public class Bullet implements ActionListener {
 	{
 		x+=dx;
 		y+=dy;
+		X+=dx;
+		Y+=dy;
 	}
 	
 	public void set(int x, int y, int dx, int dy, int btID)
 	{
 		this.x=x;
+		X=x-BulletType.getFromID(btID).getSprite().getWidth()/2;
 		this.y=y;
+		Y=y-BulletType.getFromID(btID).getSprite().getHeight()/2;
 		this.dx=dx;
 		this.dy=dy;
 		this.id = btID;
@@ -90,6 +96,16 @@ public class Bullet implements ActionListener {
 	public int getDY()
 	{
 		return dy;
+	}
+	
+	public int getSpriteX()
+	{
+		return X;
+	}
+	
+	public int getSpriteY()
+	{
+		return Y;
 	}
 	
 	public BufferedImage getSprite()
