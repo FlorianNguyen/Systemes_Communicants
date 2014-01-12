@@ -13,12 +13,10 @@ import javax.swing.Timer;
  * @author Florian
  *
  */
-public class Bullet implements ActionListener {
+public class Bullet {
 
-	public int id;
-	public int x,y,X,Y,dx,dy;
-	boolean isVisible;
-	Timer timer;
+	private int id;
+	private double x,y,X,Y,dx,dy;
 	
 	/**
 	 * Constructeur par défaut de Bullet
@@ -27,18 +25,15 @@ public class Bullet implements ActionListener {
 	 * @param dx0 Vitesse de progression selon x (algébrique)
 	 * @param dy0 Vitesse de progression selon y (algébrique)
 	 */
-	public Bullet(int no, int x0, int y0, int dx0, int dy0)
+	public Bullet(int no, int x0, int y0,double dx0, double dy0)
 	{
 		id=no;
 		x=x0;
 		X=x0-BulletType.getFromID(no).getSprite().getWidth()/2;
 		y=y0;
-		Y=x0-BulletType.getFromID(no).getSprite().getHeight()/2;
+		Y=y0-BulletType.getFromID(no).getSprite().getHeight()/2;
 		dx=dx0;
 		dy=dy0;
-		isVisible=false;
-		timer = new Timer(BulletType.getFromID(id).getReloadTime(),this);
-		timer.start();
 	}
 	
 	/**
@@ -63,16 +58,6 @@ public class Bullet implements ActionListener {
 		this.id = btID;
 	}
 	
-	public boolean isVisible()
-	{
-		return isVisible;
-	}
-	
-	public void setVisible(boolean b)
-	{
-		isVisible = b;
-	}
-	
 	public void setID(int id)
 	{
 		this.id = id;
@@ -80,32 +65,32 @@ public class Bullet implements ActionListener {
 	
 	public int getX()
 	{
-		return x;
+		return (int)x;
 	}
 	
 	public int getY()
 	{
-		return y;
+		return (int)y;
 	}
 	
-	public int getDX()
+	public double getDX()
 	{
 		return dx;
 	}
 	
-	public int getDY()
+	public double getDY()
 	{
 		return dy;
 	}
 	
 	public int getSpriteX()
 	{
-		return X;
+		return (int)X;
 	}
 	
 	public int getSpriteY()
 	{
-		return Y;
+		return (int)Y;
 	}
 	
 	public BufferedImage getSprite()
@@ -125,21 +110,8 @@ public class Bullet implements ActionListener {
 		this.dy=y;
 	}
 	
-	public void reset()
+	public int getID()
 	{
-		timer.stop();
-		timer.restart();
-		x=0;
-		y=0;
-		dx=0;
-		dy=0;
-		isVisible=false;
-		id=0;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent arg0) 
-	{
-		update();
+		return id;
 	}
 }

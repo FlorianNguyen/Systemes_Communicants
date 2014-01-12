@@ -5,8 +5,12 @@ import java.awt.event.MouseListener;
 
 public class Mouse implements MouseListener{
 
-	public boolean mouseDown;
+	private boolean mouseDown;
 
+	public boolean get()
+	{
+		return mouseDown;
+	}
 	@Override
 	public void mouseClicked(MouseEvent arg0) 
 	{
@@ -28,7 +32,6 @@ public class Mouse implements MouseListener{
 	@Override
 	public void mousePressed(MouseEvent arg0) {
 		if (arg0.getButton() == MouseEvent.BUTTON1) {
-			System.out.println("pressed");
 			mouseDown = true;
 		}
 

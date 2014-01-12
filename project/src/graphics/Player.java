@@ -23,21 +23,22 @@ import javax.swing.SwingUtilities;
  */
 public class Player {
 
+	public static final int RELOADTIME=20;
 	public static final int HITCASE_CENTERING = 32;
-	public static BufferedImage avatar; // sprite du vaisseau joueur
-	public String name; // pseudo du joueur
-	public float score; // score du joueur
-	public int[] upgrades; // armes et bonus ranges dans un tableau
-	public int life; // points de vie du joueur
-	public int x,y; // position du joueur
-	public int X,Y; // position du sprite
-	public PlayerShip pShip; // modele de vaisseau du joueur
-	public static BulletType bt1 = BulletType.BASIC_PLAYER;
-	public static BulletType bt2 = BulletType.BASIC_PLAYER;
+	private static BufferedImage avatar; // sprite du vaisseau joueur
+	private String name; // pseudo du joueur
+	private float score; // score du joueur
+	private int[] upgrades; // armes et bonus ranges dans un tableau
+	private int life; // points de vie du joueur
+	private int x,y; // position du joueur
+	private int X,Y; // position du sprite
+	private PlayerShip pShip; // modele de vaisseau du joueur
+	private static BulletType bt1 = BulletType.BASIC_PLAYER;
 	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}};
-						// dommages par defaut en fonction du niveau d'amelioration
-	public ArrayList<Bullet> balls = new ArrayList<Bullet>();
-	public Semaphore shootSem = new Semaphore(1);
+	// dommages par defaut en fonction du niveau d'amelioration
+	private ArrayList<Bullet> balls = new ArrayList<Bullet>();
+	private Semaphore shootSem = new Semaphore(1);
+	private long lastShotTime;
 
 	/**
 	 * Constructeur de la classe Player.
@@ -47,11 +48,11 @@ public class Player {
 	public Player(String name,int playershipID)
 	{
 		this.name=name;
-		
+
 		//Position par défaut du joueur lorsqu'il apparaît
 		x = 190;
 		y = 400;
-		
+
 		life = 10000;
 		score = 0;
 		upgrades = new int[3];
@@ -59,6 +60,7 @@ public class Player {
 		upgrades[1]=0;
 		upgrades[2]=0;
 		pShip = PlayerShip.getShip(playershipID);
+		lastShotTime = System.currentTimeMillis();
 		try {
 			avatar = ImageIO.read(new File("left_11.png"));
 			X = x-avatar.getWidth()/2;
@@ -68,7 +70,7 @@ public class Player {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Permet d'incrémenter le score de la partie
 	 * @param value Valeur à augmenter au score.
@@ -77,12 +79,28 @@ public class Player {
 	{
 		score+=value;
 	}
-	
+
 	public void upgrade(int id)
 	{
 		upgrades[id]++;
 	}
 	
+	public synchronized void getHitBy(BallManagement pool,int level)
+	{
+		if(pool.getBalls().size()!=0)
+		{
+			for(Bullet b : pool.getBalls())
+			{
+				if(life>0 && (b.getY()>this.getY()-10 && b.getY()<this.getY()+10) && 
+						(b.getX()<this.getX()+this.getSprite().getWidth()/2 && b.getX()>this.getX()-this.getSprite().getWidth()/2))
+				{
+					pool.remove(b);
+					this.life-=BulletType.getFromID(b.getID()).getDamage(level);
+				}
+			}
+		}
+	}
+
 	/**
 	 * Permet d'incrémenter la vie du joueur.
 	 * @param value valeur à ajouter à la vie actuelle du joueur (peut être négative...)
@@ -91,7 +109,7 @@ public class Player {
 	{
 		life+=value;
 	}
-	
+
 	/**
 	 * Modifie la position du joueur.
 	 * @param x Nouvelle abscisse du joueur
@@ -103,9 +121,9 @@ public class Player {
 		this.X=x-avatar.getWidth()/2;
 		this.y=y;
 		this.Y=y-avatar.getHeight()/2+32;
-		
+
 	}
-	
+
 	/**
 	 * Retourne le sprite du player
 	 * @return le sprite associé au player
@@ -114,7 +132,7 @@ public class Player {
 	{
 		return avatar;
 	}
-	
+
 	/**
 	 * Retourne l'ascisse X du joueur.
 	 * @return l'abscisse X du joueur.
@@ -123,7 +141,7 @@ public class Player {
 	{
 		return x;
 	}
-	
+
 	/**
 	 * Retourne l'ordonnée Y du joueur.
 	 * @return l'ordonnée Y du joueur.
@@ -132,12 +150,12 @@ public class Player {
 	{
 		return y;
 	}
-	
+
 	public int getSpriteX()
 	{
 		return X;
 	}
-	
+
 	public int getSpriteY()
 	{
 		return Y;
@@ -150,45 +168,46 @@ public class Player {
 	{
 		return life;
 	}
-	
+
 	public void primaryShooting(BallManagement bm)
 	{
-		if(upgrades[0]==0)
+		if(System.currentTimeMillis()-lastShotTime>BulletType.BASIC_PLAYER.getReloadTime())
 		{
-			try {
-				shootSem.acquire();
-				bm.acquirePB(x,y,0,-5,BulletType.BASIC_PLAYER.getID());
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if(upgrades[0]==0)
+			{
+				try {
+					shootSem.acquire();
+					bm.addBall(x,y,0,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
-		}
-		else if(upgrades[1]==1)
-		{
-			try {
-				bm.acquirePB(x-2,y,0,-5,BulletType.BASIC_PLAYER.getID());
-				bm.acquirePB(x+2,y,0,-5,BulletType.BASIC_PLAYER.getID());
-				this.wait(BulletType.BASIC_PLAYER.getReloadTime());
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			else if(upgrades[0]==1)
+			{
+				try {
+					shootSem.acquire();
+					bm.addBall(x-10,y,-0.4,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
+					bm.addBall(x+10,y,0.4,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
-		}
-		else if(upgrades[2]==2)
-		{
-			try {
-				bm.acquirePB(x-3,y-2,0,-5,BulletType.BASIC_PLAYER.getID());
-				bm.acquirePB(x+3,y-2,0,-5,BulletType.BASIC_PLAYER.getID());
-				bm.acquirePB(x,y+1,0,5,BulletType.BASIC_PLAYER.getID());
-				this.wait(BulletType.BASIC_PLAYER.getReloadTime());
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			else if(upgrades[0]==2)
+			{
+				try {
+					shootSem.acquire();
+					bm.addBall(x-17,y,-0.6,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
+					bm.addBall(x+17,y,0.6,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
+					bm.addBall(x,y-12,0,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
+			lastShotTime = System.currentTimeMillis();
+			shootSem.release();
 		}
-		shootSem.release();
 	}
-	
+
 	public PlayerShip getShip()
 	{
 		return pShip;

@@ -15,8 +15,8 @@ import javax.imageio.ImageIO;
 public enum BulletType {
 	BASIC_ENNEMY1(1,100,2,20),
 	BASIC_ENNEMY2(2,100,2,40),
-	BASIC_MEDIUM(3,100,2,60),
-	BASIC_PLAYER(0,150,2,16);
+	BASIC_MEDIUM(3,100,2,200),
+	BASIC_PLAYER(0,1,15,100);
 	
 	private int id,damage,speed,reloadTime;
 	private BufferedImage sprite;
@@ -80,9 +80,9 @@ public enum BulletType {
 	 * Retourne les dommages par défaut du type de munitions
 	 * @return
 	 */
-	public int getDamage()
+	public int getDamage(int level)
 	{
-		return damage;
+		return (int)(damage*0.8+Math.asin(Math.PI*0.5/20*level));
 	}
 	
 	/**
@@ -93,5 +93,4 @@ public enum BulletType {
 	{
 		return sprite;
 	}
-	
 }
