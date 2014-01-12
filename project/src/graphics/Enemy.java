@@ -145,8 +145,9 @@ public class Enemy implements ActionListener {
 	{
 		if(pool.getBalls().size()!=0)
 		{
-			for(Bullet b : pool.getBalls())
+			for(int i=0;i<pool.getBalls().size();i++)
 			{
+				Bullet b = pool.getBalls().get(i);
 				if(life>0 && (b.getY()>this.getY()-10 && b.getY()<this.getY()+10) && 
 						(b.getX()<this.getX()+this.getSprite().getWidth()/2 && b.getX()>this.getX()-this.getSprite().getWidth()/2))
 				{
@@ -155,6 +156,7 @@ public class Enemy implements ActionListener {
 				}
 			}
 		}
+		if(life<=0){isAlive=false;}
 	}
 
 	/**

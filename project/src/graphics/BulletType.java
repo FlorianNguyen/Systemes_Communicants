@@ -13,10 +13,10 @@ import javax.imageio.ImageIO;
  *
  */
 public enum BulletType {
-	BASIC_ENNEMY1(1,100,2,20),
-	BASIC_ENNEMY2(2,100,2,40),
-	BASIC_MEDIUM(3,100,2,200),
-	BASIC_PLAYER(0,1,15,100);
+	BASIC_1(1,50,2,200),
+	BASIC_2(2,100,2,200),
+	BOSS(3,200,2,150),
+	BASIC_PLAYER(0,100,15,100);
 	
 	private int id,damage,speed,reloadTime;
 	private BufferedImage sprite;
@@ -60,9 +60,9 @@ public enum BulletType {
 	{
 		switch(id)
 		{
-		case 1 : return BASIC_ENNEMY1;
-		case 2 : return BASIC_ENNEMY2;
-		case 3 : return BASIC_MEDIUM;
+		case 1 : return BASIC_1;
+		case 2 : return BASIC_2;
+		case 3 : return BOSS;
 		case 0 : return BASIC_PLAYER;
 		default : return BASIC_PLAYER;
 		}
@@ -82,7 +82,8 @@ public enum BulletType {
 	 */
 	public int getDamage(int level)
 	{
-		return (int)(damage*0.8+Math.asin(Math.PI*0.5/20*level));
+		return (int)(damage*0.8+damage*2*2/Math.PI*Math.atan(Math.PI*0.5/20*level));
+		// en 51 niveaux les dommages seront multipliés par 2.5, avec une limite à l'infini de 2.8
 	}
 	
 	/**

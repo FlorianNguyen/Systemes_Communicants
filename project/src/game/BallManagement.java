@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BallManagement {
 
 	private ArrayList<Bullet> bullets;
-	private ArrayList<Bullet> tempBullets;
+	//private ArrayList<Bullet> tempBullets;
 
 	/**
 	 * Construction d'un BallManagement avec des array permettant le stockage des informations relatives aux Bullets.
@@ -21,7 +21,7 @@ public class BallManagement {
 	public BallManagement()
 	{
 		bullets = new ArrayList<Bullet>();
-		tempBullets = new ArrayList<Bullet>();
+		//tempBullets = new ArrayList<Bullet>();
 	}
 
 	/**
@@ -40,14 +40,16 @@ public class BallManagement {
 
 	public void update()
 	{
-		for(Bullet b : tempBullets) {
+		//for(Bullet b : tempBullets) {
+		for(int i=0;i<bullets.size();i++) {
+			Bullet b = bullets.get(i);
 			b.update();
 			if(b.getX()<-30||b.getY()<-30||b.getX()>400||b.getY()>750) {
 				bullets.remove(b);
 				this.remove(b);
 			}
 		}
-		tempBullets = new ArrayList<Bullet>(bullets);
+		//tempBullets = new ArrayList<Bullet>(bullets);
 	}
 
 	public synchronized void remove(Bullet b)
@@ -56,7 +58,8 @@ public class BallManagement {
 	}
 	public ArrayList<Bullet> getBalls()
 	{
-		return tempBullets;
+		//return tempBullets;
+		return bullets;
 	}
 
 	public boolean isEmpty()

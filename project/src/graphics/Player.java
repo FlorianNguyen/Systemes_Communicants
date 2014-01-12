@@ -32,7 +32,7 @@ public class Player {
 	private int life; // points de vie du joueur
 	private int x,y; // position du joueur
 	private int X,Y; // position du sprite
-	private PlayerShip pShip; // modele de vaisseau du joueur
+	private Ship pShip; // modele de vaisseau du joueur
 	private static BulletType bt1 = BulletType.BASIC_PLAYER;
 	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}};
 	// dommages par defaut en fonction du niveau d'amelioration
@@ -59,16 +59,13 @@ public class Player {
 		upgrades[0]=0;
 		upgrades[1]=0;
 		upgrades[2]=0;
-		pShip = PlayerShip.getShip(playershipID);
+		pShip = Ship.BASIC_PLAYER;
 		lastShotTime = System.currentTimeMillis();
-		try {
-			avatar = ImageIO.read(new File("left_11.png"));
-			X = x-avatar.getWidth()/2;
-			Y = y-avatar.getHeight()/2+HITCASE_CENTERING;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		avatar = Ship.BASIC_PLAYER.getSprite();
+		//avatar = ImageIO.read(new File("left_11.png"));
+		X = x-avatar.getWidth()/2;
+		Y = y-avatar.getHeight()/2+HITCASE_CENTERING;
 	}
 
 	/**
@@ -84,13 +81,14 @@ public class Player {
 	{
 		upgrades[id]++;
 	}
-	
+
 	public synchronized void getHitBy(BallManagement pool,int level)
 	{
 		if(pool.getBalls().size()!=0)
 		{
-			for(Bullet b : pool.getBalls())
+			for(int i=0;i<pool.getBalls().size();i++)
 			{
+				Bullet b = pool.getBalls().get(i);
 				if(life>0 && (b.getY()>this.getY()-10 && b.getY()<this.getY()+10) && 
 						(b.getX()<this.getX()+this.getSprite().getWidth()/2 && b.getX()>this.getX()-this.getSprite().getWidth()/2))
 				{
@@ -208,7 +206,7 @@ public class Player {
 		}
 	}
 
-	public PlayerShip getShip()
+	public Ship getShip()
 	{
 		return pShip;
 	}

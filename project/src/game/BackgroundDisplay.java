@@ -44,6 +44,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	private static final int LOWERLIMIT = 40; //LIMITE BASSE EN DESSOUS DE LAQUELLE LE PLAYER NE PEUT PAS ALLER
 	private static final int RIGHTLIMIT = 5; // LIMITE DROITE (limite gauche fonctionnelle par défaut)
 	public static final int DEFAULT_FREQUENCY=16; // TEMPS DE RAFRAICHISSEMENT DES IMAGES
+	public static final int BOSSFREQUENCY = 5; // NOMBRE DE NIVEAUX ENTRE CHAQUE BOSS
 	private BufferedImage background; // IMAGE SERVANT DE FOND D'ECRAN DEFILANT
 	private int height,width,level,wave;
 	private int Y; // VARIABLE SERVANT AU DEFILEMENT DU BACKGROUND
@@ -52,14 +53,15 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	private BallManagement pBalls,eBalls; // OBJETS BULLET A PEINDRE A L'INSTANT T (BULLET PLAYER OU ENEMY)
 	private ArrayList<Enemy> enemies = new ArrayList<Enemy>(0);
 	private Timer t = new Timer(DEFAULT_FREQUENCY,this); // TIMER POUR LE RAFRAICHISSEMENT DES IMAGES
+	private long lastNextTime;
 
 	public static final int[][] levels = // NIVEAUX ET VAGUES DE VAISSEAUX PAR NIVEAU
 		{
-		{2,0,0}, //niveau 1, 3 vagues...
-		{3,0,0}, //niveau 2
-		{3,0,0}, //niveau 3
-		{3,0,0}  // etc
-		};
+		{1,0,0}, //niveau 1, 3 vagues...
+		{1,0,0}, //niveau 2
+		{0,1,0}, //niveau 3
+		{1,1,0},  // etc
+		{0,0,3}};
 
 	/**
 	 * Constructeur de la classe BackgroundDisplay.
@@ -85,8 +87,8 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			eBalls = new BallManagement();
 
 			// ENEMY TEST
-			enemies.add(new Enemy(background.getWidth()/2,80,BulletType.BASIC_MEDIUM,Ship.ENNEMY_MEDIUM0));
-			System.out.println( "ENEMY : " +enemies.get(0).getX() +" ; WIDTH : " +width);
+			enemies.add(new Enemy(background.getWidth()/2,80,BulletType.BASIC_1,Ship.ENEMY_1));
+			//System.out.println( "ENEMY : " +enemies.get(0).getX() +" ; WIDTH : " +width);
 
 			// OPTIONS DU JFRAME
 			frame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
@@ -135,7 +137,7 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 		if(!pBalls.isEmpty())
 		{
 			synchronized(pBalls.getBalls()) {
-			ArrayList<Bullet> toDraw = pBalls.getBalls();
+				ArrayList<Bullet> toDraw = pBalls.getBalls();
 				for(int i=0;i<toDraw.size();i++)
 				{
 					g.drawImage(
@@ -146,12 +148,12 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 				}
 			}
 		}
-		
+
 		// RAFRAICHISSEMENT DES BULLETS ENEMY S'IL Y EN A
 		if(!eBalls.isEmpty())
 		{
 			synchronized(eBalls.getBalls()) {
-			ArrayList<Bullet> toDraw = eBalls.getBalls();
+				ArrayList<Bullet> toDraw = eBalls.getBalls();
 				eBalls.update();
 				for(int i=0;i<toDraw.size();i++)
 				{
@@ -210,23 +212,25 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 			else if(point.x>background.getWidth()-RIGHTLIMIT){player.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
 			else player.setXY(point.x,background.getHeight()-LOWERLIMIT);
 		}
-		
+
 		//PARTIE RELATIVE AU TIR DU VAISSEAU PLAYER
-				if(mouse.get()==true)
-				{
-					player.primaryShooting(pBalls); // primaryShooting prend en compte le temps de rechargement
-					//System.out.println("PBALLS = " +pBalls.getBalls().size() + " ; EBALLS = " + eBalls.getBalls().size());
-				}
-		
-		//GESTION DES VAISSEAUX ABATTUS ET VIVANTS
-		for(Enemy enemy : enemies)
+		if(mouse.get()==true)
 		{
+			player.primaryShooting(pBalls); // primaryShooting prend en compte le temps de rechargement
+			//System.out.println("PBALLS = " +pBalls.getBalls().size() + " ; EBALLS = " + eBalls.getBalls().size());
+		}
+
+		//GESTION DES VAISSEAUX ABATTUS ET VIVANTS
+		System.out.println(enemies.size());
+		for(int i=0;i<enemies.size();i++)
+		{
+			Enemy enemy = enemies.get(i);
 			if(enemy.isAlive())
 			{
 				enemy.shoot(eBalls);
 				enemy.getHitBy(pBalls,level); //getHitBy() doit tenir compte du niveau pour que la difficulté augmente
 				player.getHitBy(eBalls,level);
-				next();
+				//next();
 			}
 			if(!enemy.isAlive())
 			{
@@ -287,12 +291,28 @@ public class BackgroundDisplay extends JPanel implements ActionListener {
 	{
 		return width;
 	}
-	
+
 	/**
 	 * Méthode permettant de passer aux vagues et aux niveaux suivants
 	 */
 	public void next()
 	{
-		
+		if(((enemies.size()==0 && System.currentTimeMillis()-lastNextTime>5000 && level%BOSSFREQUENCY!=0) || 
+				(level%BOSSFREQUENCY==BOSSFREQUENCY-1 && System.currentTimeMillis()-lastNextTime>5000))) //boss tous les 5 niveaux
+		{
+			level++;
+			if(levels[level%5][0]!=0)
+			{
+				enemies.add(new Enemy(background.getWidth()/2,-150,BulletType.BASIC_1,Ship.ENEMY_1));
+			}
+			if(levels[level%5][1]!=0)
+			{
+				enemies.add(new Enemy(background.getWidth()/2,-150,BulletType.BASIC_2,Ship.ENEMY_2));
+			}
+			if(levels[level%5][2]!=0)
+			{
+				enemies.add(new Enemy(background.getWidth()/2,-500,BulletType.BOSS,Ship.BOSS));
+			}
+		}
 	}
 }
