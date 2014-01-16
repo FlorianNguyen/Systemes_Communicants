@@ -45,36 +45,47 @@ public class Player {
 	 * @param name Pseudo du joueur
 	 * @param playershipID ID du joueur
 	 */
-	public Player(String name,int playershipID)
+	public Player(String name, boolean playerTwo)
 	{
-		this.name=name;
+			this.name=name;
 
-		//Position par défaut du joueur lorsqu'il apparaît
-		x = 190;
-		y = 400;
+			//Position par défaut du joueur lorsqu'il apparaît
+			x = 190;
+			y = 400;
 
-		life = 10000;
-		score = 0;
-		upgrades = new int[3];
-		upgrades[0]=0;
-		upgrades[1]=0;
-		upgrades[2]=0;
-		pShip = Ship.BASIC_PLAYER;
-		lastShotTime = System.currentTimeMillis();
-		
-		avatar = Ship.BASIC_PLAYER.getSprite();
-		//avatar = ImageIO.read(new File("left_11.png"));
-		X = x-avatar.getWidth()/2;
-		Y = y-avatar.getHeight()/2+HITCASE_CENTERING;
+			life = 10000;
+			score = 0;
+			upgrades = new int[3];
+			upgrades[0]=0;
+			upgrades[1]=0;
+			upgrades[2]=0;
+			pShip = Ship.BASIC_PLAYER;
+			lastShotTime = System.currentTimeMillis();
+			if(!playerTwo)
+			{
+			avatar = Ship.BASIC_PLAYER.getSprite();
+			}
+			else if(playerTwo)
+			{
+				try {
+					avatar = ImageIO.read(new File("shipfriend.png"));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			X = x-avatar.getWidth()/2;
+			Y = y-avatar.getHeight()/2+HITCASE_CENTERING;
 	}
 
 	/**
 	 * Permet d'incrémenter le score de la partie
 	 * @param value Valeur à augmenter au score.
 	 */
-	public void addToScore(int value)
+	public void addToScore(int value, int level)
 	{
-		score+=value;
+		score+=(int)(value*2/Math.PI*Math.atan(Math.PI*0.5/20*level));
+		System.out.println(score);
 	}
 
 	public void upgrade(int id)
@@ -89,8 +100,8 @@ public class Player {
 			for(int i=0;i<pool.getBalls().size();i++)
 			{
 				Bullet b = pool.getBalls().get(i);
-				if(life>0 && (b.getY()>this.getY()-10 && b.getY()<this.getY()+10) && 
-						(b.getX()<this.getX()+this.getSprite().getWidth()/2 && b.getX()>this.getX()-this.getSprite().getWidth()/2))
+				if(life>0 && (b.getY()>this.getY()-15 && b.getY()<this.getY()+15) && 
+						(b.getX()<this.getX()+15 && b.getX()>this.getX()-15))
 				{
 					pool.remove(b);
 					this.life-=BulletType.getFromID(b.getID()).getDamage(level);

@@ -1,6 +1,9 @@
 package server;
 
-import game.BackgroundDisplay;
+import game.BackgroundDisplayClient;
+import game.BackgroundDisplayHost;
+import game.ProcessingThread;
+import graphics.Bullet;
 import graphics.Player;
 
 import java.awt.event.ActionEvent;
@@ -13,6 +16,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.Timer;
@@ -26,16 +30,15 @@ import javax.swing.Timer;
  * @author Florian
  *
  */
-public class Client implements ActionListener {
+public class Client extends Thread {
 
 	DataInputStream inFromUser;
 	Socket clientSocket;
 	DataOutputStream outToServer;
-	BufferedReader inFromServer;
-	Player p;
-	int x,y;
-	int size;
-	Timer timer = new Timer(25,this);
+	DataInputStream inFromServer;
+	BackgroundDisplayClient game;
+	ProcessingThread pt;
+	int x,y,score;
 
 	/**
 	 * Constructeur de Client prenant en argument le Player du joueur souhaitant rejoindre une partie.
@@ -43,16 +46,10 @@ public class Client implements ActionListener {
 	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
-	public Client(Player player) {
-		p = player;
-		try {
-			clientSocket = new Socket("localhost",6789);
-			outToServer = new DataOutputStream(clientSocket.getOutputStream());
-			inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			size = 2;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public Client(BackgroundDisplayClient game, ProcessingThread pt) 
+	{
+		this.game = game;
+		this.pt = pt;
 	}	
 
 	/**
@@ -64,17 +61,58 @@ public class Client implements ActionListener {
 		try {
 			clientSocket = new Socket("localhost",6789);
 			outToServer = new DataOutputStream(clientSocket.getOutputStream());
-			inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			int x,y,size;
-			size = 2;
+			inFromServer = new DataInputStream(clientSocket.getInputStream());
+			int NUMBER;
+			int tempX,tempY,tempID;
+			double tempDX,tempDY;
+			Bullet tempBullet;
+			ArrayList<Bullet> balls = game.getPlayerBalls();
 
 			while(true)
 			{
-				outToServer.writeInt(size);
-				x = p.getX();
-				y = p.getY();
-				outToServer.writeInt(x);
-				outToServer.writeInt(y);
+				// PHASE D'ENVOI DU CLIENT
+				NUMBER = balls.size();
+				outToServer.writeInt(NUMBER);
+				outToServer.writeInt(game.getX());
+				outToServer.writeInt(game.getY());
+				for(int i=0;i<NUMBER;i++)
+				{
+					tempBullet = balls.get(i);
+					outToServer.writeInt(tempBullet.getX());
+					outToServer.writeInt(tempBullet.getY());
+					outToServer.writeDouble(tempBullet.getDX());
+					outToServer.writeDouble(tempBullet.getDY());
+					outToServer.writeInt(tempBullet.getID());
+				}
+
+				// PHASE D'ECOUTE DU CLIENT
+				
+				// BULLETS
+				NUMBER = inFromServer.readInt();
+				for(int i=0;i<NUMBER;i++)
+				{
+					tempX = inFromServer.readInt();
+					tempY = inFromServer.readInt();
+					tempDX = inFromServer.readDouble();
+					tempDY = inFromServer.readDouble();
+					tempID = inFromServer.readInt();
+					pt.process(tempX, tempY, tempDX, tempDY, tempID);
+				}
+				game.addMultiplayerData(pt.getResult());
+				pt.reset();
+				
+				// ENNEMIS
+				NUMBER = inFromServer.readInt();
+				for(int i=0;i<NUMBER;i++)
+				{
+					tempX = inFromServer.readInt();
+					tempY = inFromServer.readInt();
+					tempID = inFromServer.readInt();
+					pt.process(tempX, tempY, tempID);
+				}
+				game.addMultiplayerData(pt.getResult());
+				pt.reset();
+
 			}
 
 		} catch (UnknownHostException e) {
@@ -82,36 +120,5 @@ public class Client implements ActionListener {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * Main...
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String args[]) throws IOException
-	{
-		JFrame frame = new JFrame();
-		Player p = new Player("player_1",1);
-		BackgroundDisplay display = new BackgroundDisplay("Player_2",1,"background2.png");
-		Client client = new Client(p);
-		client.timer.start();
-	}
-
-	/**
-	 * Méthode définissant ce qui sera réalisé à chaque incrémentation du Timer.
-	 * Toutes les 25ms, le Client prend les positions du Player et les envoie.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		x = p.getX();
-		y = p.getY();
-		try {
-			outToServer.writeInt(size);
-			outToServer.writeInt(x);
-			outToServer.writeInt(y);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}		
 	}
 }

@@ -13,9 +13,9 @@ import javax.imageio.ImageIO;
  *
  */
 public enum BulletType {
-	BASIC_1(1,50,2,200),
-	BASIC_2(2,100,2,200),
-	BOSS(3,200,2,150),
+	BASIC_1(1,50,5,200),
+	BASIC_2(2,100,5,300),
+	BOSS(3,200,6,500),
 	BASIC_PLAYER(0,100,15,100);
 	
 	private int id,damage,speed,reloadTime;
