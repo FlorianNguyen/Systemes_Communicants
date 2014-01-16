@@ -55,17 +55,22 @@ public class HostServer extends Thread {
 		try {
 			connectionSocket = new ServerSocket(6789); // mobilisation du port 6789
 			Socket socket = connectionSocket.accept(); // attente de connexion
+			System.out.println("CONNEXION SUCCEEDED");
 			DataInputStream inFromClient = new	DataInputStream(socket.getInputStream()); // réception du flux de données
 			DataOutputStream outToClient = new DataOutputStream(socket.getOutputStream());
 			game.enableMultiplayer();
 			playerConnected = true;
 
-			while(true)
+			while(!game.isOver())
 			{
+				System.out.println("1");
 				// PHASE D'ECOUTE DU SERVEUR
 				NUMBER = inFromClient.readInt(); // nombre de balles de J2 qui vont être envoyées 
-				x = inFromClient.readInt();
-				y = inFromClient.readInt();
+				System.out.println("2");
+				System.out.print("NUMBER : "+NUMBER);
+				x = inFromClient.readInt(); System.out.println("x received = "+x);
+				y = inFromClient.readInt(); System.out.println("y received = "+y);
+				System.out.println("3");
 				for(int i=0;i<NUMBER;i++)
 				{
 					tempX = inFromClient.readInt();
@@ -74,26 +79,33 @@ public class HostServer extends Thread {
 					tempDY = inFromClient.readDouble();
 					tempID = inFromClient.readInt();
 					pt.process(tempX,tempY,tempDX,tempDY,tempID);
+					System.out.println("4");
 				}
-				game.setMultiplayerXY(x,y);
+				game.setMultiplayerXY(x,y); System.out.println("player 2 moved");
 				game.addMultiplayerData(pt.getResult());
 				pt.reset();
 
 				// PHASE D'ENVOI DU SERVEUR
-				NUMBER = inFromClient.readInt(); // nombre d'ennemis qui vont être envoyés 
 				enemies = game.getEnemies();
+				NUMBER = enemies.size();
+				outToClient.writeInt(NUMBER); // nombre d'ennemis qui vont être envoyés 
 				for(int i=0;i<NUMBER;i++)
 				{
 					tempE = enemies.get(i);
 					tempX = tempE.getX();
+					outToClient.writeInt(tempX);
 					tempY = tempE.getY();
+					outToClient.writeInt(tempY);
 					tempID = tempE.getShip().getID();
+					outToClient.writeInt(tempID);
 					pt.process(tempX,tempY,tempID);
 				}
 				game.setMultiplayerXY(x,y);
 				game.addMultiplayerData(pt.getResult());
 				pt.reset();
 			}
+			socket.close();
+			connectionSocket.close();
 
 		} catch (IOException e) {
 			e.printStackTrace();

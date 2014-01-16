@@ -40,12 +40,15 @@ import javax.swing.SwingUtilities;
  */
 public class BackgroundDisplayHost extends JPanel implements ActionListener {
 
-	private Player player1,player2; //JOUEUR
 	private static final int LOWERLIMIT = 40; //LIMITE BASSE EN DESSOUS DE LAQUELLE LE PLAYER NE PEUT PAS ALLER
 	private static final int RIGHTLIMIT = 5; // LIMITE DROITE (limite gauche fonctionnelle par défaut)
 	public static final int DEFAULT_FREQUENCY=10; // TEMPS DE RAFRAICHISSEMENT DES IMAGES
 	public static final int BOSSFREQUENCY = 5; // NOMBRE DE NIVEAUX ENTRE CHAQUE BOSS
 	public static BufferedImage background; // IMAGE SERVANT DE FOND D'ECRAN DEFILANT
+	public static BufferedImage friendSprite = Ship.FRIEND.getSprite();
+	public static BufferedImage mySprite = Ship.BASIC_PLAYER.getSprite();
+
+	private Player player1,player2; //JOUEUR
 	private int height,width,level;
 	private int Y; // VARIABLE SERVANT AU DEFILEMENT DU BACKGROUND
 	private JFrame frame;
@@ -59,6 +62,8 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 	private long lastSpawnTime;
 	private long time = System.currentTimeMillis();
 	private boolean isOver,enablePlayer2;
+	private boolean multiOn;
+
 
 	public static final int[][] levels = // NIVEAUX ET VAGUES DE VAISSEAUX PAR NIVEAU
 		{
@@ -74,11 +79,11 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 	 * @param sourcename Source du fichier image (png) qui sera utilisé en fond d'écran.
 	 * L'image doit être cyclique, c'est à dire que la partie haute et la partie basse sont compatibles.
 	 */
-	public BackgroundDisplayHost(String name, String sourcename)
+	public BackgroundDisplayHost(String name, boolean multiOn, String sourcename)
 	{
 		try {
 			// INITIALISATIONS
-			player1 = new Player(name,false);
+			player1 = new Player(name);
 			frame = new JFrame();
 			notSpawnedYet=true;
 			lastSpawnTime = 0;
@@ -87,11 +92,12 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 			width = background.getWidth();
 			level = -1;
 			isOver = false;
+			this.multiOn = multiOn;
 			pBalls = new BallManagement();
 			eBalls = new BallManagement();
 
 			// CAS DU MULTIJOUEUR
-			player2 = new Player("P2",true);
+			player2 = new Player("P2");
 			enablePlayer2 = false;
 
 			// OPTIONS DU JFRAME
@@ -132,52 +138,56 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 			g.drawImage(background,0,i,this);
 		}
 
-		// RAFRAICHISSEMENT DES OBJETS ENEMY
-		for(Enemy e:enemies)
+		if(!multiOn || (multiOn && enablePlayer2))
 		{
-			g.drawImage(
-					e.getSprite(),
-					e.getSpriteX(),
-					e.getSpriteY(),
-					this);
-		}
+			// RAFRAICHISSEMENT DES OBJETS ENEMY
+			for(Enemy e:enemies)
+			{
+				g.drawImage(
+						e.getSprite(),
+						e.getSpriteX(),
+						e.getSpriteY(),
+						this);
+			}
 
-		// RAFRAICHISSEMENT DES BULLET PLAYER S'IL Y EN A
-		if(!pBalls.isEmpty())
-		{
-			synchronized(pBalls.getBalls()) {
-				ArrayList<Bullet> toDraw = pBalls.getBalls();
-				for(int i=0;i<toDraw.size();i++)
-				{
-					g.drawImage(
-							toDraw.get(i).getSprite(),
-							toDraw.get(i).getSpriteX(),
-							toDraw.get(i).getSpriteY(),
-							this);
+			// RAFRAICHISSEMENT DES BULLET PLAYER S'IL Y EN A
+			if(!pBalls.isEmpty())
+			{
+				synchronized(pBalls.getBalls()) {
+					ArrayList<Bullet> toDraw = pBalls.getBalls();
+					for(int i=0;i<toDraw.size();i++)
+					{
+						g.drawImage(
+								toDraw.get(i).getSprite(),
+								toDraw.get(i).getSpriteX(),
+								toDraw.get(i).getSpriteY(),
+								this);
+					}
+				}
+			}
+
+			// RAFRAICHISSEMENT DES BULLETS ENEMY S'IL Y EN A
+			if(!eBalls.isEmpty())
+			{
+				synchronized(eBalls.getBalls()) {
+					ArrayList<Bullet> toDraw = eBalls.getBalls();
+					eBalls.update();
+					for(int i=0;i<toDraw.size();i++)
+					{
+						g.drawImage(
+								toDraw.get(i).getSprite(),
+								toDraw.get(i).getSpriteX(),
+								toDraw.get(i).getSpriteY(),
+								this);
+					}
 				}
 			}
 		}
 
-		// RAFRAICHISSEMENT DES BULLETS ENEMY S'IL Y EN A
-		if(!eBalls.isEmpty())
-		{
-			synchronized(eBalls.getBalls()) {
-				ArrayList<Bullet> toDraw = eBalls.getBalls();
-				eBalls.update();
-				for(int i=0;i<toDraw.size();i++)
-				{
-					g.drawImage(
-							toDraw.get(i).getSprite(),
-							toDraw.get(i).getSpriteX(),
-							toDraw.get(i).getSpriteY(),
-							this);
-				}
-			}
-		}
 
 		// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 1
 		g.drawImage(
-				player1.getSprite(),
+				mySprite,
 				player1.getSpriteX(),
 				player1.getSpriteY(), //centrage souris sur la hit-case
 				this);
@@ -187,7 +197,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 		{
 			// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 2
 			g.drawImage(
-					player2.getSprite(),
+					friendSprite,
 					player2.getSpriteX(),
 					player2.getSpriteY(), //centrage souris sur la hit-case
 					this);
@@ -202,8 +212,8 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		System.out.println(System.currentTimeMillis()-time);
-		time = System.currentTimeMillis();
+		//		System.out.println(System.currentTimeMillis()-time);
+		//		time = System.currentTimeMillis();
 		// MISE A JOUR DES BALLES 
 		pBalls.update();
 
@@ -268,7 +278,10 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 				enemies.remove(enemy);
 			}
 		}
-		next();
+		if(!multiOn || (multiOn && enablePlayer2))
+		{
+			next();
+		}
 		repaint();
 	}
 
@@ -462,14 +475,4 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 			}
 		}
 	}
-
-	//	@Override
-	//	public void run() {
-	//		// TODO Auto-generated method stub
-	//		while(!gameover)
-	//		{
-	//			Thread.yield();
-	//		}
-	//		// GESTION DE L'ENVOI DU SCORE ET DE LA FIN DE JEU
-	//	}
 }

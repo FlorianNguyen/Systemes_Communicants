@@ -2,7 +2,6 @@ package game;
 import graphics.Bullet;
 import graphics.BulletType;
 import graphics.Enemy;
-import graphics.FictiveEnemy;
 import graphics.Player;
 import graphics.Ship;
 
@@ -47,20 +46,23 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 	public static final int DEFAULT_FREQUENCY=10; // TEMPS DE RAFRAICHISSEMENT DES IMAGES
 	public static final int BOSSFREQUENCY = 5; // NOMBRE DE NIVEAUX ENTRE CHAQUE BOSS
 	public static BufferedImage background; // IMAGE SERVANT DE FOND D'ECRAN DEFILANT
+	public static BufferedImage friendSprite = Ship.FRIEND.getSprite();
+	public static BufferedImage mySprite = Ship.BASIC_PLAYER.getSprite();
+	
 	private int height,width,level;
 	private int Y; // VARIABLE SERVANT AU DEFILEMENT DU BACKGROUND
 	private JFrame frame;
 	private Mouse mouse = new Mouse(); // MOUSELISTENER PERMETTANT DE CONTROLER LE JOUEUR
 	private BallManagement pBalls,eBalls; // OBJETS BULLET A PEINDRE A L'INSTANT T (BULLET PLAYER OU ENEMY)
-	private FictiveEnemy penemy;
 	private volatile ArrayList<Enemy> enemies = new ArrayList<Enemy>(0);
-	private java.util.Timer enemyTimer = new java.util.Timer();
+	//	private java.util.Timer enemyTimer = new java.util.Timer();
 	private javax.swing.Timer t = new javax.swing.Timer(DEFAULT_FREQUENCY,this); // TIMER POUR LE RAFRAICHISSEMENT DES IMAGES
-	private long lastNextTime;
-	private boolean notSpawnedYet;
-	private long lastSpawnTime;
-	private long time = System.currentTimeMillis();
-	private boolean isOver,enablePlayer1;
+	//	private long lastNextTime;
+	//	private boolean notSpawnedYet;
+	//	private long lastSpawnTime;
+	//	private long time = System.currentTimeMillis();
+	private boolean isOver;
+	//enablePlayer2;
 
 	public static final int[][] levels = // NIVEAUX ET VAGUES DE VAISSEAUX PAR NIVEAU
 		{
@@ -80,7 +82,8 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 	{
 		try {
 			// INITIALISATIONS
-			player2 = new Player(name,false);
+			player1 = new Player("P1");
+			player2 = new Player("P2");
 			frame = new JFrame();
 			//			notSpawnedYet=true;
 			//			lastSpawnTime = 0;
@@ -91,10 +94,6 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 			isOver = false;
 			pBalls = new BallManagement();
 			eBalls = new BallManagement();
-
-			// RECUPERATION DES DONNEES DU HOST
-			player1 = new Player("P1",true);
-			enablePlayer1 = false;
 
 			// OPTIONS DU JFRAME
 			frame.addMouseListener(mouse);
@@ -110,7 +109,7 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 			frame.setLocationRelativeTo(null);
 
 			// LANCEMENT DU TIMER
-			//lancement uniquement quand connection réussie...
+			//lancement quand connection multijoueur réussie si multijoueur il y a
 			t.start();
 
 		} catch (IOException e) {
@@ -177,20 +176,19 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 			}
 		}
 
-		// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 2
-		g.drawImage(
-				player2.getSprite(),
-				player2.getSpriteX(),
-				player2.getSpriteY(), //centrage souris sur la hit-case
-				this);
-
 		// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 1
 		g.drawImage(
-				player1.getSprite(),
+				mySprite,
 				player1.getSpriteX(),
 				player1.getSpriteY(), //centrage souris sur la hit-case
 				this);
 
+		// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 2
+		g.drawImage(
+				friendSprite,
+				player2.getSpriteX(),
+				player2.getSpriteY(), //centrage souris sur la hit-case
+				this);
 		g.dispose();
 	}
 
@@ -214,41 +212,36 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 		else if(point.x<0)
 		{
 			if(point.y<0){player1.setXY(0,0);}
-			else if(point.y>background.getHeight()-LOWERLIMIT){player2.setXY(0,background.getHeight()-LOWERLIMIT);}
-			else player2.setXY(0,point.y);
+			else if(point.y>background.getHeight()-LOWERLIMIT){player1.setXY(0,background.getHeight()-LOWERLIMIT);}
+			else player1.setXY(0,point.y);
 		}
 		else if(point.x>background.getWidth()-RIGHTLIMIT)
 		{
 			if(point.y<0){player1.setXY(background.getWidth()-RIGHTLIMIT,0);}
-			else if(point.y>background.getHeight()-LOWERLIMIT){player2.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
-			else player2.setXY(background.getWidth()-RIGHTLIMIT,point.y);
+			else if(point.y>background.getHeight()-LOWERLIMIT){player1.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
+			else player1.setXY(background.getWidth()-RIGHTLIMIT,point.y);
 		}
 		else if(point.y<0)
 		{
-			if(point.x<0){player2.setXY(0,0);}
-			else if(point.x>background.getWidth()-RIGHTLIMIT){player2.setXY(background.getWidth()-RIGHTLIMIT,0);}
-			else player2.setXY(point.x,0);
+			if(point.x<0){player1.setXY(0,0);}
+			else if(point.x>background.getWidth()-RIGHTLIMIT){player1.setXY(background.getWidth()-RIGHTLIMIT,0);}
+			else player1.setXY(point.x,0);
 		}
 		else if(point.y>background.getHeight()-LOWERLIMIT)
 		{
-			if(point.x<0){player2.setXY(0,background.getHeight()-LOWERLIMIT);}
-			else if(point.x>background.getWidth()-RIGHTLIMIT){player2.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
-			else player2.setXY(point.x,background.getHeight()-LOWERLIMIT);
+			if(point.x<0){player1.setXY(0,background.getHeight()-LOWERLIMIT);}
+			else if(point.x>background.getWidth()-RIGHTLIMIT){player1.setXY(background.getWidth()-RIGHTLIMIT,background.getHeight()-LOWERLIMIT);}
+			else player1.setXY(point.x,background.getHeight()-LOWERLIMIT);
 		}
 
 		// PARTIE RELATIVE AU TIR DU VAISSEAU PLAYER
 		if(mouse.get()==true)
 		{
-			player2.primaryShooting(pBalls); // primaryShooting prend en compte le temps de rechargement
+			player1.primaryShooting(pBalls); // primaryShooting prend en compte le temps de rechargement
 		}
-		
 		repaint();
 	}
 
-	public ArrayList<Bullet> getPlayerBalls()
-	{
-		return pBalls.getBalls();
-	}
 	/**
 	 * Dit si à la position (x,y) donnée, on se trouve dans l'écran.
 	 * Cette méthode étant utilisée pour les Bullet, il faut tenir compte de la taille du sprite de la munition
@@ -296,6 +289,10 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 		return p;
 	}
 
+	public ArrayList<Bullet> getPlayerBalls()
+	{
+		return pBalls.getBalls();
+	}
 	/**
 	 * Renvoie la hauteur de l'image servant de background, et donc du background.  
 	 */
@@ -320,18 +317,12 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener {
 		}
 	}
 
+	public ArrayList<Enemy> getEnemies()
+	{
+		return enemies;
+	}
 	public void setMultiplayerXY(int a, int b)
 	{
-		player2.setXY(a,b);
-	}
-	
-	public int getX()
-	{
-		return player2.getX();
-	}
-	
-	public int getY()
-	{
-		return player2.getY();
+		player2.setXY(a, b);
 	}
 }

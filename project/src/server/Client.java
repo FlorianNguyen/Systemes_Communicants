@@ -59,7 +59,7 @@ public class Client extends Thread {
 	public void run() 
 	{
 		try {
-			clientSocket = new Socket("localhost",6789);
+			clientSocket = new Socket("25.111.33.223",6789);
 			outToServer = new DataOutputStream(clientSocket.getOutputStream());
 			inFromServer = new DataInputStream(clientSocket.getInputStream());
 			int NUMBER;
@@ -68,13 +68,13 @@ public class Client extends Thread {
 			Bullet tempBullet;
 			ArrayList<Bullet> balls = game.getPlayerBalls();
 
-			while(true)
+			while(!game.isOver()) // FAUSSE CONDITION : à changer
 			{
 				// PHASE D'ENVOI DU CLIENT
 				NUMBER = balls.size();
-				outToServer.writeInt(NUMBER);
-				outToServer.writeInt(game.getX());
-				outToServer.writeInt(game.getY());
+				outToServer.writeInt(NUMBER); System.out.println("number sent");
+				outToServer.writeInt(game.getX()); System.out.println("x sent");
+				outToServer.writeInt(game.getY()); System.out.println("y sent");
 				for(int i=0;i<NUMBER;i++)
 				{
 					tempBullet = balls.get(i);
@@ -83,6 +83,7 @@ public class Client extends Thread {
 					outToServer.writeDouble(tempBullet.getDX());
 					outToServer.writeDouble(tempBullet.getDY());
 					outToServer.writeInt(tempBullet.getID());
+					System.out.println(tempBullet.getX() + "   ;   " +tempBullet.getY());
 				}
 
 				// PHASE D'ECOUTE DU CLIENT
@@ -112,8 +113,8 @@ public class Client extends Thread {
 				}
 				game.addMultiplayerData(pt.getResult());
 				pt.reset();
-
 			}
+			clientSocket.close();
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();

@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
  */
 public enum Ship {
 	BASIC_PLAYER(0,100*100,0),
+	FRIEND(-1,100*100,0),
 	ENEMY_1(1,100*30,1000),
 	ENEMY_2(2,100*50,3000),
 	BOSS(3,100*80,10000);
@@ -31,13 +32,17 @@ public enum Ship {
 			this.id=id;
 			this.life=life;
 			this.score=score;
-			if(id!=0)
+			if(id>0)
 			{
 				sprite = ImageIO.read(new File("enemy"+id+".png"));
 			}
-			else
+			else if(id<0)
 			{
-				sprite = ImageIO.read(new File("ship"+id+".png"));
+				sprite = ImageIO.read(new File("shipfriend.png"));
+			}
+			else if(id==0)
+			{
+				sprite = ImageIO.read(new File("ship0.png"));
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
