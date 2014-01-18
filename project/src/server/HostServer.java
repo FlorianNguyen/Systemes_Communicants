@@ -1,23 +1,13 @@
 package server;
 
 import game.BackgroundDisplayHost;
-import game.BallManagement;
-import game.ProcessingThread;
 import graphics.Enemy;
-import graphics.Player;
-
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.swing.JFrame;
 
 /**
  * Class Server qui permet au J1 d'hoster la partie sur laquelle il attend le J2.
@@ -28,15 +18,18 @@ import javax.swing.JFrame;
  */
 public class HostServer extends Thread {
 
+	DataInputStream inFromClient;
+	DataOutputStream outToClient;
 	private BackgroundDisplayHost game;
 	private int x,y; // Position du player 2
-	private ProcessingThread pt; // Traitement de données et envoi vers la partie
 	private boolean playerConnected;
+	public static long FREQUENCY = 10;
+	private long startTime;
 
-	public HostServer(BackgroundDisplayHost game, ProcessingThread pt)
+	public HostServer(BackgroundDisplayHost game)
 	{
+		startTime = System.currentTimeMillis();
 		this.game = game;
-		this.pt = pt;
 		playerConnected = false;
 	}
 
@@ -46,70 +39,99 @@ public class HostServer extends Thread {
 	 */
 	public void run()
 	{
-		ServerSocket connectionSocket;
-		int NUMBER;
-		int tempX,tempY,tempID;
-		double tempDX,tempDY;
-		ArrayList<Enemy> enemies;
-		Enemy tempE;
 		try {
+			ServerSocket connectionSocket;
+			int NUMBER;
+			int tempX,tempY,tempID;
+			double tempDX,tempDY;
+			boolean shoot;
+			ArrayList<Enemy> enemies;
+			Enemy tempE;
 			connectionSocket = new ServerSocket(6789); // mobilisation du port 6789
 			Socket socket = connectionSocket.accept(); // attente de connexion
 			System.out.println("CONNEXION SUCCEEDED");
-			DataInputStream inFromClient = new	DataInputStream(socket.getInputStream()); // réception du flux de données
-			DataOutputStream outToClient = new DataOutputStream(socket.getOutputStream());
-			game.enableMultiplayer();
-			playerConnected = true;
+			inFromClient = new	DataInputStream(socket.getInputStream()); // réception du flux de données
+			outToClient = new DataOutputStream(socket.getOutputStream());
+			long time = System.currentTimeMillis();
+			outToClient.writeBoolean(true);	// le serveur est prêt			
+			boolean cReady = false;
+			boolean spawn;
+			int remove;
 
-			while(!game.isOver())
+			while(true)
 			{
-				System.out.println("1");
-				// PHASE D'ECOUTE DU SERVEUR
-				NUMBER = inFromClient.readInt(); // nombre de balles de J2 qui vont être envoyées 
-				System.out.println("2");
-				System.out.print("NUMBER : "+NUMBER);
-				x = inFromClient.readInt(); System.out.println("x received = "+x);
-				y = inFromClient.readInt(); System.out.println("y received = "+y);
-				System.out.println("3");
-				for(int i=0;i<NUMBER;i++)
+				if(!cReady)
 				{
-					tempX = inFromClient.readInt();
-					tempY = inFromClient.readInt();
-					tempDX = inFromClient.readDouble();
-					tempDY = inFromClient.readDouble();
-					tempID = inFromClient.readInt();
-					pt.process(tempX,tempY,tempDX,tempDY,tempID);
-					System.out.println("4");
+					cReady = inFromClient.readBoolean();
+					game.enableMultiplayer();
+					playerConnected = true;
 				}
-				game.setMultiplayerXY(x,y); System.out.println("player 2 moved");
-				game.addMultiplayerData(pt.getResult());
-				pt.reset();
+				if(System.currentTimeMillis()-time>50)
+				{
+//					game.canIterate.acquire();
+					// RECEPTION POSITION PLAYER2 + TIR
+					x = inFromClient.readInt(); 
+					y = inFromClient.readInt();
+					//					shoot = inFromClient.readBoolean();
 
-				// PHASE D'ENVOI DU SERVEUR
-				enemies = game.getEnemies();
-				NUMBER = enemies.size();
-				outToClient.writeInt(NUMBER); // nombre d'ennemis qui vont être envoyés 
-				for(int i=0;i<NUMBER;i++)
-				{
-					tempE = enemies.get(i);
-					tempX = tempE.getX();
-					outToClient.writeInt(tempX);
-					tempY = tempE.getY();
-					outToClient.writeInt(tempY);
-					tempID = tempE.getShip().getID();
-					outToClient.writeInt(tempID);
-					pt.process(tempX,tempY,tempID);
+					// ENVOI POSITIONS JOUEUR1
+					outToClient.writeInt(game.getPlayer1().getX());
+					//System.out.println(game.getPlayer1().getX());
+					outToClient.writeInt(game.getPlayer1().getY());
+					//System.out.println(game.getPlayer1().getX());
+					//						outToClient.writeInt(game.getPlayer1().getScore());
+					//						outToClient.writeInt(game.getLevel());
+					game.setPlayer2XY(x,y);
+					//						if(shoot==true)
+					//						{
+					//							game.getPlayer2().primaryShooting(game.getPlayerBalls());
+					//						}
+
+					// ENVOI BULLETS JOUEUR
+					
+					
+					// ENVOI ENNEMIS 
+					//					spawn = game.needSpawnEnemy();
+					//					outToClient.writeBoolean(spawn);
+					//					remove = game.getNeedRemove();
+					//					outToClient.writeInt(remove);
+					//					if(spawn)
+					//					{
+					//						outToClient.writeInt(game.getLastEnemyIndex());
+					//						game.setNeedSpawnEnemy(false);
+					//					}
+					//					if(remove!=-1)
+					//					{
+					//						game.setNeedRemove(-1);
+					//					}
+
+
+					//					// ENVOI BALLES JOUEUR
+					//					ArrayList<Bullet> balls = game.getPlayerBalls().getBalls();
+					//					synchronized(balls)
+					//					{
+					//						NUMBER = balls.size();
+					//						outToClient.writeInt(NUMBER);
+					//						for(Bullet b:balls)
+					//						{
+					//							outToClient.writeInt(b.getX());
+					//							outToClient.writeInt(b.getY());
+					//							outToClient.writeDouble(b.getDX());
+					//							outToClient.writeDouble(b.getDY());
+					//							outToClient.writeInt(b.getID());
+					//						}
+					//					}
+//					game.canIterate.release();
 				}
-				game.setMultiplayerXY(x,y);
-				game.addMultiplayerData(pt.getResult());
-				pt.reset();
+				else yield();
 			}
-			socket.close();
-			connectionSocket.close();
-
 		} catch (IOException e) {
-			e.printStackTrace();
-		}
+			// TODO Auto-generated catch block
+			e.printStackTrace();}
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 
 	public boolean playerConnected()

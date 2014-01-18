@@ -12,26 +12,27 @@ import javax.imageio.ImageIO;
  *
  */
 public enum Ship {
-	BASIC_PLAYER(0,100*100,0),
-	FRIEND(-1,100*100,0),
-	ENEMY_1(1,100*30,1000),
-	ENEMY_2(2,100*50,3000),
-	BOSS(3,100*80,10000);
+	BASIC_PLAYER(0,100*100,0,0),
+	FRIEND(-1,100*100,0,0),
+	ENEMY_1(1,100*30,1000,10),
+	ENEMY_2(2,100*50,3000,20),
+	BOSS(3,100*80,10000,100);
 
 	private BufferedImage sprite;
-	private int id,life,score;
+	private int id,life,score,xp;
 
 	/**
 	 * Constructeur par défaut de Ship
 	 * @param id ID du ship
 	 * @param life Points de vie du Ship
 	 */
-	private Ship(int id, int life, int score)
+	private Ship(int id, int life, int score,int xp)
 	{
 		try {
 			this.id=id;
 			this.life=life;
 			this.score=score;
+			this.xp=xp;
 			if(id>0)
 			{
 				sprite = ImageIO.read(new File("enemy"+id+".png"));
@@ -50,6 +51,10 @@ public enum Ship {
 		}
 	}
 
+	public int getXP()
+	{
+		return xp;
+	}
 	/**
 	 * Retourne l'ID du Ship
 	 * @return

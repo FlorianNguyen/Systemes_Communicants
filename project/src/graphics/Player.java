@@ -23,28 +23,29 @@ import javax.swing.SwingUtilities;
  */
 public class Player {
 
-	public static final int RELOADTIME=20;
-	public static final int HITCASE_CENTERING = 32;
+	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}};
 	private static BufferedImage avatar; // sprite du vaisseau joueur
+	public static final int HITCASE_CENTERING = 32;
+
 	private String name; // pseudo du joueur
-	private float score; // score du joueur
-	private int[] upgrades; // armes et bonus ranges dans un tableau
+	private int score; // score du joueur
 	private int life; // points de vie du joueur
 	private int x,y; // position du joueur
 	private int X,Y; // position du sprite
 	private Ship pShip; // modele de vaisseau du joueur
-	public static int[][] DEFAULTDAMAGE ={{100,80,60},{110,85,65},{130,90,75}};
 	// dommages par defaut en fonction du niveau d'amelioration
 	private ArrayList<Bullet> balls = new ArrayList<Bullet>();
 	private Semaphore shootSem = new Semaphore(1);
 	private long lastShotTime;
+	private int xp;
+	private int level;
 
 	/**
 	 * Constructeur de la classe Player.
 	 * @param name Pseudo du joueur
 	 * @param playershipID ID du joueur
 	 */
-	public Player(String name)
+	public Player(String name, boolean client)
 	{
 		this.name=name;
 
@@ -54,10 +55,7 @@ public class Player {
 
 		life = 10000;
 		score = 0;
-		upgrades = new int[3];
-		upgrades[0]=0;
-		upgrades[1]=0;
-		upgrades[2]=0;
+		xp=0;
 		pShip = Ship.BASIC_PLAYER;
 		lastShotTime = System.currentTimeMillis();
 		avatar = Ship.BASIC_PLAYER.getSprite();
@@ -71,27 +69,48 @@ public class Player {
 	 */
 	public void addToScore(int value, int level)
 	{
-		score+=(int)(value*2/Math.PI*Math.atan(Math.PI*0.5/20*level));
-		System.out.println(score);
+		score+=(int)(1+value*2/Math.PI*Math.atan(Math.PI*0.5/20*level));
 	}
 
-	public void upgrade(int id)
+	public void addToXp(int toAdd)
 	{
-		upgrades[id]++;
+		xp+=toAdd;
 	}
 
-	public synchronized void getHitBy(BallManagement pool,int level)
+	public void setXP(int value)
 	{
-		if(pool.getBalls().size()!=0)
+		xp = value;
+	}
+
+	public int getLevel()
+	{
+		return level;
+	}
+	
+	public void setLevel(int value)
+	{
+		this.level = value;
+	}
+	public int getXP()
+	{
+		return xp;
+	}
+
+	public void getHitBy(BallManagement pool,int level)
+	{
+		synchronized(pool.getBalls())
 		{
-			for(int i=0;i<pool.getBalls().size();i++)
+			if(pool.getBalls().size()!=0)
 			{
-				Bullet b = pool.getBalls().get(i);
-				if(life>0 && (b.getY()>this.getY()-12 && b.getY()<this.getY()+12) && 
-						(b.getX()<this.getX()+12 && b.getX()>this.getX()-12))
+				for(int i=0;i<pool.getBalls().size();i++)
 				{
-					pool.remove(b);
-					this.life-=BulletType.getFromID(b.getID()).getDamage(level);
+					Bullet b = pool.getBalls().get(i);
+					if(life>0 && (b.getY()>this.getY()-15 && b.getY()<this.getY()+15) && 
+							(b.getX()<this.getX()+15 && b.getX()>this.getX()-15))
+					{
+						pool.remove(b);
+						this.life-=BulletType.getFromID(b.getID()).getDamage(level);
+					}
 				}
 			}
 		}
@@ -165,43 +184,65 @@ public class Player {
 		return life;
 	}
 
+	public void setScore(int value)
+	{
+		score = value;
+	}
+
 	public void primaryShooting(BallManagement bm)
+	{
+		synchronized(bm.getBalls())
+		{
+			if(System.currentTimeMillis()-lastShotTime>BulletType.BASIC_PLAYER.getReloadTime())
+			{
+				if(xp<100)
+				{
+					try {
+						shootSem.acquire();
+						bm.addBall(x,y,0,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID(),0);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				else if(xp<1000)
+				{
+					try {
+						shootSem.acquire();
+						bm.addBall(x-10,y,-0.4,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID(),0);
+						bm.addBall(x+10,y,0.4,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID(),0);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				else if(xp>1000)
+				{
+					try {
+						shootSem.acquire();
+						bm.addBall(x-17,y,-0.6,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID(),0);
+						bm.addBall(x+17,y,0.6,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID(),0);
+						bm.addBall(x,y-12,0,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID(),0);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				lastShotTime = System.currentTimeMillis();
+				shootSem.release();
+			}
+		}
+	}
+
+	public int getScore()
+	{
+		return score;
+	}
+
+	public boolean canShoot()
 	{
 		if(System.currentTimeMillis()-lastShotTime>BulletType.BASIC_PLAYER.getReloadTime())
 		{
-			if(upgrades[0]==0)
-			{
-				try {
-					shootSem.acquire();
-					bm.addBall(x,y,0,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			else if(upgrades[0]==1)
-			{
-				try {
-					shootSem.acquire();
-					bm.addBall(x-10,y,-0.4,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
-					bm.addBall(x+10,y,0.4,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			else if(upgrades[0]==2)
-			{
-				try {
-					shootSem.acquire();
-					bm.addBall(x-17,y,-0.6,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
-					bm.addBall(x+17,y,0.6,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
-					bm.addBall(x,y-12,0,-BulletType.BASIC_PLAYER.getSpeed(),BulletType.BASIC_PLAYER.getID());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			lastShotTime = System.currentTimeMillis();
-			shootSem.release();
+			return true;
 		}
+		else return false;
 	}
 
 	public Ship getShip()

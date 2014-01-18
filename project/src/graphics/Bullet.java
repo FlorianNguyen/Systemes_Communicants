@@ -17,6 +17,7 @@ public class Bullet {
 
 	private int id;
 	private double x,y,X,Y,dx,dy;
+	private long index;
 	
 	/**
 	 * Constructeur par défaut de Bullet
@@ -25,8 +26,9 @@ public class Bullet {
 	 * @param dx0 Vitesse de progression selon x (algébrique)
 	 * @param dy0 Vitesse de progression selon y (algébrique)
 	 */
-	public Bullet(int no, int x0, int y0,double dx0, double dy0)
+	public Bullet(int no, int x0, int y0,double dx0, double dy0,long index)
 	{
+		this.index=index;
 		id=no;
 		x=x0;
 		X=x0-BulletType.getFromID(no).getSprite().getWidth()/2;
@@ -36,6 +38,10 @@ public class Bullet {
 		dy=dy0;
 	}
 	
+	public long getIndex()
+	{
+		return index;
+	}
 	/**
 	 * Met à jour les positions du Bullet grâce à une incrémentation de x et y
 	 */

@@ -5,18 +5,12 @@ import graphics.Enemy;
 import graphics.Player;
 import graphics.Ship;
 
-import java.awt.AWTException;
-import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +21,6 @@ import java.util.concurrent.Semaphore;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 
 /**
@@ -38,15 +31,16 @@ import javax.swing.SwingUtilities;
  * @author Florian Nguyen
  *
  */
-public class BackgroundDisplayHost extends JPanel implements ActionListener {
+public class BackgroundDisplayHost extends JPanel implements ActionListener, Runnable{
 
 	private static final int LOWERLIMIT = 40; //LIMITE BASSE EN DESSOUS DE LAQUELLE LE PLAYER NE PEUT PAS ALLER
 	private static final int RIGHTLIMIT = 5; // LIMITE DROITE (limite gauche fonctionnelle par défaut)
-	public static final int DEFAULT_FREQUENCY=10; // TEMPS DE RAFRAICHISSEMENT DES IMAGES
+	public static final int DEFAULT_FREQUENCY=16; // TEMPS DE RAFRAICHISSEMENT DES IMAGES
 	public static final int BOSSFREQUENCY = 5; // NOMBRE DE NIVEAUX ENTRE CHAQUE BOSS
 	public static BufferedImage background; // IMAGE SERVANT DE FOND D'ECRAN DEFILANT
 	public static BufferedImage friendSprite = Ship.FRIEND.getSprite();
 	public static BufferedImage mySprite = Ship.BASIC_PLAYER.getSprite();
+	public Semaphore canIterate = new Semaphore(1);
 
 	private Player player1,player2; //JOUEUR
 	private int height,width,level;
@@ -61,8 +55,12 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 	private boolean notSpawnedYet;
 	private long lastSpawnTime;
 	private long time = System.currentTimeMillis();
-	private boolean isOver,enablePlayer2;
+	private boolean isOver,enablePlayer2,needSpawnEnemy;
 	private boolean multiOn;
+	private ArrayList<Bullet> tempData;
+	private long maxIndex;
+	private int lastEnemyIndex;
+	private int needRemove;
 
 
 	public static final int[][] levels = // NIVEAUX ET VAGUES DE VAISSEAUX PAR NIVEAU
@@ -83,21 +81,25 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 	{
 		try {
 			// INITIALISATIONS
-			player1 = new Player(name);
+			player1 = new Player(name,false);
 			frame = new JFrame();
+			needSpawnEnemy=false;
 			notSpawnedYet=true;
 			lastSpawnTime = 0;
+			needRemove=-1;
+			maxIndex=0;
 			background = ImageIO.read(new File(sourcename));
 			height = background.getHeight();
 			width = background.getWidth();
 			level = -1;
 			isOver = false;
+			tempData = new ArrayList<Bullet>();
 			this.multiOn = multiOn;
 			pBalls = new BallManagement();
 			eBalls = new BallManagement();
 
 			// CAS DU MULTIJOUEUR
-			player2 = new Player("P2");
+			player2 = new Player("P2",false);
 			enablePlayer2 = false;
 
 			// OPTIONS DU JFRAME
@@ -122,10 +124,39 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 		}
 	}
 
+	public Player getPlayer2()
+	{
+		return player2;
+	}
+	public Player getPlayer1()
+	{
+		return player1;
+	}
+
 	public boolean isOver()
 	{
 		return isOver;
 	}
+
+	public int getLastEnemyIndex()
+	{
+		return lastEnemyIndex;
+	}
+
+	public void setLastEnemyIndex(int value)
+	{
+		lastEnemyIndex=value;
+	}
+	public void setNeedSpawnEnemy(boolean b)
+	{
+		needSpawnEnemy=b;
+	}
+
+	public boolean needSpawnEnemy()
+	{
+		return needSpawnEnemy;
+	}
+
 	/**
 	 * Méthode utilisée par défaut par JPanel.
 	 */
@@ -166,6 +197,19 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 				}
 			}
 
+			// BALLES TIREES PAR LE JOUEUR 2
+			if(tempData.size()!=0)
+			{
+				for(Bullet b:tempData)
+				{
+					g.drawImage(
+							BulletType.getFromID(b.getID()).getSprite(),
+							b.getSpriteX(),
+							b.getSpriteY(),
+							this);
+				}
+			}
+
 			// RAFRAICHISSEMENT DES BULLETS ENEMY S'IL Y EN A
 			if(!eBalls.isEmpty())
 			{
@@ -186,23 +230,49 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 
 
 		// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 1
-		g.drawImage(
-				mySprite,
-				player1.getSpriteX(),
-				player1.getSpriteY(), //centrage souris sur la hit-case
-				this);
+		if(player1.getLife()>0)
+		{
+			g.drawImage(
+					mySprite,
+					player1.getSpriteX(),
+					player1.getSpriteY(), //centrage souris sur la hit-case
+					this);
+		}
 
 		// EVENTUELLES DONNEES LIEES A UN JOUEUR 2
 		if(enablePlayer2)
 		{
 			// RAFFRAICHISSEMENT DE LA POSITION DU JOUEUR 2
-			g.drawImage(
-					friendSprite,
-					player2.getSpriteX(),
-					player2.getSpriteY(), //centrage souris sur la hit-case
-					this);
+			if(player2.getLife()>0)
+			{
+				g.drawImage(
+						friendSprite,
+						player2.getSpriteX(),
+						player2.getSpriteY(), //centrage souris sur la hit-case
+						this);
+			}
 		}
 		g.dispose();
+	}
+
+	public int getScore()
+	{
+		return player1.getScore();
+	}
+
+	public int getLevel()
+	{
+		return level;
+	}
+
+	public void setNeedRemove(int index)
+	{
+		needRemove=index;
+	}
+
+	public int getNeedRemove()
+	{
+		return needRemove;
 	}
 
 	/**
@@ -212,12 +282,12 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		//		System.out.println(System.currentTimeMillis()-time);
-		//		time = System.currentTimeMillis();
+		canIterate.tryAcquire();
 		// MISE A JOUR DES BALLES 
 		pBalls.update();
 
 		//GESTION DU JOUEUR EN FONCTION DU POINTEUR SOURIS
+		player1.setLevel(level);
 		Point point = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(point, this);
 		if(point.x>0 && point.x<background.getWidth()-RIGHTLIMIT && point.y>0 && point.y<background.getHeight()-LOWERLIMIT)
@@ -259,7 +329,9 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 		player1.getHitBy(eBalls,level);
 		if(enablePlayer2)
 		{
-			player1.getHitBy(eBalls,level);
+			player2.getHitBy(eBalls, level);
+			player2.setXP(player1.getXP());
+			player2.setScore(player1.getScore());
 		}
 
 		// GESTION DES VAISSEAUX ABATTUS ET VIVANTS
@@ -269,12 +341,25 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 			if(enemy.isAlive() && isInScreen(enemy.getX(),enemy.getY(),enemy.getShip()))
 			{
 				enemy.update();
-				enemy.shoot(eBalls);
+				boolean b = enemy.shoot(eBalls,maxIndex);
+				if(b && (level%BOSSFREQUENCY==0 || level%BOSSFREQUENCY==1))
+				{
+					maxIndex++;
+				}
+				else if(b && (level%BOSSFREQUENCY==0 || level%BOSSFREQUENCY==1))
+				{
+					maxIndex+=2;
+				}
+				else if(b && level%BOSSFREQUENCY==4)
+				{
+					maxIndex+=15;
+				}
 				enemy.getHitBy(pBalls,level); //getHitBy() doit tenir compte du niveau pour que la difficulté augmente
 			}
 			if(!enemy.isAlive())
 			{
-				player1.addToScore(enemy.getShip().getScore(),level);
+				player1.addToScore(enemy.getShip().getScore(),level); // J1 détient le score, et pas J2
+				setNeedRemove(enemy.getLevelIndex());
 				enemies.remove(enemy);
 			}
 		}
@@ -282,7 +367,22 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 		{
 			next();
 		}
+		if(player1.getLife()<0 && player2.getLife()<0)
+		{
+			isOver=true;
+		}
+		canIterate.release();
 		repaint();
+	}
+
+	public long getMaxIndex()
+	{
+		return maxIndex;
+	}
+
+	public BallManagement getPlayerBalls()
+	{
+		return pBalls;
 	}
 
 	/**
@@ -348,27 +448,26 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 		return width;
 	}
 
-	public void addMultiplayerData(ArrayList<Bullet> balls)
-	{
-		for(int i=0;i<balls.size();i++)
-		{
-			pBalls.getBalls().add(balls.get(i));
-		}
-	}
+	//	public void addTempData(ArrayList<Bullet> balls)
+	//	{
+	//		tempData=balls;
+	//	}
 
 	public ArrayList<Enemy> getEnemies()
 	{
 		return enemies;
 	}
-	public void setMultiplayerXY(int a, int b)
+
+	public void setPlayer2XY(int a, int b)
 	{
-		player2.setXY(a, b);
+		player2.setXY(a,b);
 	}
 
 	public void enableMultiplayer()
 	{
 		enablePlayer2=true;
 	}
+
 	/**
 	 * Méthode permettant de passer aux vagues et aux niveaux suivants
 	 */
@@ -393,14 +492,32 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 					{
 						for(int i=0;i<levels[(level)%BOSSFREQUENCY][0];i++)
 						{
-							enemyTimer.schedule(
-									new TimerTask()
-									{
-										public void run()
+							if(i==0)
+							{
+								enemyTimer.schedule(
+										new TimerTask()
 										{
-											enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_1,level));
-										}
-									},2000*i);
+											public void run()
+											{
+												enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_1,level,0));
+												setNeedSpawnEnemy(true);
+											}
+										},2000*0);
+								setLastEnemyIndex(0);
+							}
+							else if(i==1)
+							{
+								enemyTimer.schedule(
+										new TimerTask()
+										{
+											public void run()
+											{
+												enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_1,level,1));
+												setNeedSpawnEnemy(true);
+											}
+										},2000*1);
+								setLastEnemyIndex(0);
+							}
 							if(i==levels[(level)%BOSSFREQUENCY][0]-1)
 							{
 								lastSpawnTime = System.currentTimeMillis();
@@ -408,7 +525,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 							}
 						}
 					}
-					else if(!notSpawnedYet)
+					else if(!notSpawnedYet && enemies.size()==0)
 					{
 						if(System.currentTimeMillis()-lastSpawnTime>5000 && enemies.size()==0)
 						{
@@ -423,14 +540,28 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 					{
 						for(int i=0;i<levels[(level)%BOSSFREQUENCY][1];i++)
 						{
-							enemyTimer.schedule(
-									new TimerTask()
-									{
-										public void run()
+							if(i==0)
+							{
+								enemyTimer.schedule(
+										new TimerTask()
 										{
-											enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BASIC_2,Ship.ENEMY_2,level));
-										}
-									},2000*i);
+											public void run()
+											{
+												enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BASIC_2,Ship.ENEMY_2,level,0));
+											}
+										},2000*0);
+							}
+							else if(i==1)
+							{
+								enemyTimer.schedule(
+										new TimerTask()
+										{
+											public void run()
+											{
+												enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BASIC_2,Ship.ENEMY_2,level,1));
+											}
+										},2000*1);
+							}
 							if(i==levels[(level)%BOSSFREQUENCY][1]-1)
 							{
 								lastSpawnTime = System.currentTimeMillis();
@@ -457,7 +588,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 				{
 					if(notSpawnedYet)
 					{
-						enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BOSS,Ship.BOSS,level));
+						enemies.add(new Enemy(background.getWidth()/2,0,BulletType.BOSS,Ship.BOSS,level,0));
 
 						lastSpawnTime = System.currentTimeMillis();
 						notSpawnedYet = false;
@@ -473,6 +604,15 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener {
 				}
 
 			}
+		}
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true)
+		{
+			Thread.yield();
 		}
 	}
 }

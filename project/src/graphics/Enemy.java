@@ -1,13 +1,11 @@
 package graphics;
 
-import game.BackgroundDisplayHost;
 import game.BallManagement;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
 /**
@@ -17,7 +15,9 @@ import javax.swing.Timer;
  *
  */
 public class Enemy {
-	private final int hMargin;
+	private static int hMargin;
+	
+	private int levelIndex;
 	private BulletType bt;
 	private Ship ship;
 	private int x,y,X,Y;
@@ -28,6 +28,7 @@ public class Enemy {
 	private boolean inScreen;
 	private boolean ready;
 	private long lastShotTime;
+	private double bossRotation =0;
 
 	/**
 	 * Constructeur par défaut de Enemy
@@ -36,22 +37,27 @@ public class Enemy {
 	 * @param bt Type de munitions utilisé par le vaisseau
 	 * @param ship Type de vaisseau de l'Enemy
 	 */
-	public Enemy(int x,int y,BulletType bt,Ship ship,int level)
+	public Enemy(int x,int y,BulletType bt,Ship ship,int level,int levelIndex)
 	{
-		super();
+		this.levelIndex = levelIndex;
 		this.x=x;
 		this.y=y;
 		this.ship=ship;
+		hMargin=0;
 		X=x-ship.getSprite().getWidth()/2;
 		Y=y-ship.getSprite().getHeight()/2;
-		hMargin = BackgroundDisplayHost.background.getWidth()/2-this.getSprite().getWidth()/2;
-		left = hMargin/2;
 		this.bt=bt;
-		this.ship=ship;
 		lastShotTime = System.currentTimeMillis();
 		isAlive = true;
 		ready = false;
 		inScreen = false;
+		try {
+			hMargin = ImageIO.read(new File("background2.png")).getWidth()/2-this.getSprite().getWidth()/2;
+			left = hMargin/2;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		life=ship.getLife(level);
 	}
 
@@ -68,6 +74,11 @@ public class Enemy {
 		Y+=dy;
 	}
 
+	public int getLevelIndex()
+	{
+		return levelIndex;
+	}
+	
 	/**
 	 * Retourne la coordonnée x du joueur (position centrée sur le sprite)
 	 */
@@ -140,27 +151,48 @@ public class Enemy {
 	 * Méthode de tir propre à l'Enemy
 	 * @param pool le BallManagement où envoyer le Bullet(s) tiré(s)
 	 */
-	public void shoot(BallManagement pool)
+	public boolean shoot(BallManagement pool,long maxIndex)
 	{
+		boolean toReturn=false;
 		if(ready)
 		{
 			if(System.currentTimeMillis()-lastShotTime>bt.getReloadTime())
 			{
 				if(bt.getID()==1)
 				{
-				pool.addBall(x,y,0,5,bt.getID());
-				lastShotTime = System.currentTimeMillis();
+					synchronized(pool.getBalls())
+					{
+						pool.addBall(x,y,0,bt.getSpeed(),bt.getID(),maxIndex);
+						lastShotTime = System.currentTimeMillis();
+						toReturn=true;
+					}
 				}
 				else if(bt.getID()==2)
 				{
-					
+					synchronized(pool.getBalls())
+					{
+						//pool.addBall(x,y,0,5,bt.getID(),maxIndex);
+						pool.addBall(x,y,0.9,bt.getSpeed(),bt.getID(),maxIndex);
+						pool.addBall(x,y,-0.9,bt.getSpeed(),bt.getID(),maxIndex);
+						lastShotTime = System.currentTimeMillis();
+						toReturn=true;
+					}
 				}
 				else if(bt.getID()==3)
 				{
-					
+					synchronized(pool.getBalls())
+					{
+						for(double angle = -Math.PI/2; angle<2*Math.PI+-Math.PI/2; angle += 2*Math.PI/12) {
+							pool.getBalls().add(new Bullet(bt.getID(),x,y,bt.getSpeed()*Math.cos(angle+bossRotation),bt.getSpeed()*Math.sin(angle+bossRotation),maxIndex+(long)(angle/(Math.PI/2)+1)));
+						}
+						bossRotation+=10*Math.PI/180;
+						lastShotTime = System.currentTimeMillis();
+						toReturn=true;
+					}
 				}
 			}
 		}
+		return toReturn;
 	}
 
 	public void getHitBy(BallManagement pool,int level)
@@ -183,7 +215,7 @@ public class Enemy {
 			if(life<=0){isAlive=false;}
 		}
 	}
-	
+
 	/**
 	 * Retourne l'abscisse du sprite du vaisseau (coin en haut à gauche)
 	 */
@@ -205,7 +237,7 @@ public class Enemy {
 	public int getLife() {
 		return life;
 	}
-	
+
 	/**
 	 * Retourne le sprite du vaisseau
 	 */

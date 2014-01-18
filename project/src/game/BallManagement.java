@@ -31,9 +31,12 @@ public class BallManagement {
 	 * @param dy Déplacement selon Y
 	 * @param btID ID du BulletType
 	 */
-	public void addBall(int x,int y, double dx, double dy,int n)
+	public void addBall(int x,int y, double dx, double dy,int n,long index)
 	{
-		bullets.add(new Bullet(n,x,y,dx,dy));
+		synchronized(bullets)
+		{
+			bullets.add(new Bullet(n,x,y,dx,dy,index));
+		}
 	}
 
 	public void update()
@@ -50,7 +53,10 @@ public class BallManagement {
 
 	public void remove(Bullet b)
 	{
-		bullets.remove(b);
+		synchronized(bullets)
+		{
+			bullets.remove(b);
+		}
 	}
 	public ArrayList<Bullet> getBalls()
 	{
@@ -59,6 +65,14 @@ public class BallManagement {
 
 	public boolean isEmpty()
 	{
-			return (bullets.size()==0);
+		return (bullets.size()==0);
+	}
+
+	public void resetBalls()
+	{
+		synchronized(bullets)
+		{
+			bullets = new ArrayList<Bullet>();
+		}
 	}
 }
