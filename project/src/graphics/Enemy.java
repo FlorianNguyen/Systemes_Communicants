@@ -15,6 +15,7 @@ import javax.swing.Timer;
  *
  */
 public class Enemy {
+	
 	private static int hMargin;
 	
 	private int levelIndex;
@@ -22,13 +23,15 @@ public class Enemy {
 	private Ship ship;
 	private int x,y,X,Y;
 	private int life;
-	Timer timer;
-	int left=0,right=0;
+	private int left=0,right=0;
+	private int direction;
 	private boolean isAlive;
 	private boolean inScreen;
 	private boolean ready;
 	private long lastShotTime;
 	private double bossRotation =0;
+	
+	private Timer timer;
 
 	/**
 	 * Constructeur par défaut de Enemy
@@ -39,6 +42,7 @@ public class Enemy {
 	 */
 	public Enemy(int x,int y,BulletType bt,Ship ship,int level,int levelIndex)
 	{
+		direction=0;
 		this.levelIndex = levelIndex;
 		this.x=x;
 		this.y=y;
@@ -60,7 +64,7 @@ public class Enemy {
 		}
 		life=ship.getLife(level);
 	}
-
+	
 	/**
 	 * Déplace l'Enemy (sprite et joueur) de DX selon X et DY selon Y
 	 * @param dx Déplacement selon x
@@ -74,6 +78,10 @@ public class Enemy {
 		Y+=dy;
 	}
 
+	/**
+	 * Retourne le levelIndex
+	 * @return levelIndex
+	 */
 	public int getLevelIndex()
 	{
 		return levelIndex;
@@ -122,27 +130,32 @@ public class Enemy {
 		return isAlive;
 	}
 
+	/**
+	 * Actualise la position de l'Enemy
+	 */
 	public void update()
 	{
 		if(!inScreen)
 		{
 			move(0,+2);
-			if(y>getSprite().getHeight()+30){inScreen=true;ready=true;}
+			if(y>getSprite().getHeight()+30){inScreen=true;ready=true;direction=0;}
 		}
 		if(isAlive && inScreen)
 		{
 			if(left>0)
 			{
+				direction=-1;
 				this.move(-2,0);
 				left--;
-				if(left==0){right=hMargin;}
+				if(left==0){right=hMargin;direction=0;}
 			}
 
 			if(right>0)
 			{
+				direction=+1;
 				this.move(2,0);
 				right--;
-				if(right==0){left=hMargin;}
+				if(right==0){left=hMargin;direction=0;}
 			}
 		}
 	}
@@ -162,7 +175,7 @@ public class Enemy {
 				{
 					synchronized(pool.getBalls())
 					{
-						pool.addBall(x,y,0,bt.getSpeed(),bt.getID(),maxIndex);
+						pool.addBall(x,y,direction*0.3,bt.getSpeed(),bt.getID(),maxIndex);
 						lastShotTime = System.currentTimeMillis();
 						toReturn=true;
 					}
@@ -171,9 +184,8 @@ public class Enemy {
 				{
 					synchronized(pool.getBalls())
 					{
-						//pool.addBall(x,y,0,5,bt.getID(),maxIndex);
-						pool.addBall(x,y,0.9,bt.getSpeed(),bt.getID(),maxIndex);
-						pool.addBall(x,y,-0.9,bt.getSpeed(),bt.getID(),maxIndex);
+						pool.addBall(x,y,direction*0.9,bt.getSpeed(),bt.getID(),maxIndex);
+						pool.addBall(x,y,direction*(-0.9),bt.getSpeed(),bt.getID(),maxIndex);
 						lastShotTime = System.currentTimeMillis();
 						toReturn=true;
 					}
@@ -195,6 +207,11 @@ public class Enemy {
 		return toReturn;
 	}
 
+	/**
+	 * L'Enemy entre en collision avec les balles.
+	 * @param pool Array de balles à considérer
+	 * @param level niveau actuel
+	 */
 	public void getHitBy(BallManagement pool,int level)
 	{
 		synchronized(pool.getBalls())

@@ -32,13 +32,12 @@ public class Player {
 	private int life; // points de vie du joueur
 	private int x,y; // position du joueur
 	private int X,Y; // position du sprite
+	private int xp; // xp du joueur
+	private int level; // niveau du joueur et de la partie
 	private Ship pShip; // modele de vaisseau du joueur
-	// dommages par defaut en fonction du niveau d'amelioration
 	private ArrayList<Bullet> balls = new ArrayList<Bullet>();
 	private Semaphore shootSem = new Semaphore(1);
 	private long lastShotTime;
-	private int xp;
-	private int level;
 
 	/**
 	 * Constructeur de la classe Player.
@@ -64,29 +63,45 @@ public class Player {
 	}
 
 	/**
-	 * Permet d'incrémenter le score de la partie
-	 * @param value Valeur à augmenter au score.
+	 * Permet d'incrémenter le score de la partie.
+	 * @param value Valeur à augmenter au score
 	 */
 	public void addToScore(int value, int level)
 	{
 		score+=(int)(1+value*2/Math.PI*Math.atan(Math.PI*0.5/20*level));
 	}
 
+	/**
+	 * Incrémente l'XP.
+	 * @param toAdd valeur à ajouter
+	 */
 	public void addToXp(int toAdd)
 	{
 		xp+=toAdd;
 	}
 
+	/**
+	 * Met XP à la valeur désirée.
+	 * @param value
+	 */
 	public void setXP(int value)
 	{
 		xp = value;
 	}
 
+	/**
+	 * Retourne le level.
+	 * @return level
+	 */
 	public int getLevel()
 	{
 		return level;
 	}
 	
+	/**
+	 * Met le level à la valeur désirée.
+	 * @param value nouvelle valeur du level
+	 */
 	public void setLevel(int value)
 	{
 		this.level = value;
@@ -105,8 +120,8 @@ public class Player {
 				for(int i=0;i<pool.getBalls().size();i++)
 				{
 					Bullet b = pool.getBalls().get(i);
-					if(life>0 && (b.getY()>this.getY()-15 && b.getY()<this.getY()+15) && 
-							(b.getX()<this.getX()+15 && b.getX()>this.getX()-15))
+					if(life>0 && (b.getY()>this.getY()-13 && b.getY()<this.getY()+13) && 
+							(b.getX()<this.getX()+13 && b.getX()>this.getX()-13))
 					{
 						pool.remove(b);
 						this.life-=BulletType.getFromID(b.getID()).getDamage(level);

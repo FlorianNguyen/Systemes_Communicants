@@ -83,12 +83,21 @@ public class Client extends Thread {
 					//System.out.println(game.getPlayer1().getY());
 					//					outToServer.writeBoolean(game.needShooting());
 
-					// RECEPTION COORDONNEES PLAYER SERVEUR + SCORE
+					// RECEPTION COORDONNEES PLAYER SERVEUR + SCORE + LEVEL
 					x = inFromServer.readInt();
 					y = inFromServer.readInt();
-					//					score = inFromServer.readInt();
-					//					level = inFromServer.readInt();
+					score = inFromServer.readInt();
+					level = inFromServer.readInt();
 					game.setPlayer2XY(x,y);
+
+					// PARTIE TIR
+					boolean shoot = inFromServer.readBoolean();
+					outToServer.writeBoolean(game.needShooting());
+					game.setNeedShooting(false);
+					if(shoot)
+					{
+						game.getPlayer2().primaryShooting(game.getPlayerBalls());
+					}
 					//					game.canIterate.release();
 					//					game.getPlayer1().setScore(score);
 					//					game.setLevel(level);

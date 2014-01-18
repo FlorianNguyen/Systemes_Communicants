@@ -38,6 +38,10 @@ public class Bullet {
 		dy=dy0;
 	}
 	
+	/**
+	 * Retourne l'index d'une balle.
+	 * @return
+	 */
 	public long getIndex()
 	{
 		return index;
@@ -53,6 +57,14 @@ public class Bullet {
 		Y+=dy;
 	}
 	
+	/**
+	 * Met le Bullet à la valeur désirée.
+	 * @param x X
+	 * @param y Y
+	 * @param dx déplacement selon X
+	 * @param dy déplacement selon Y
+	 * @param btID ID du BulletType 
+	 */
 	public void set(int x, int y, int dx, int dy, int btID)
 	{
 		this.x=x;
@@ -64,58 +76,73 @@ public class Bullet {
 		this.id = btID;
 	}
 	
-	public void setID(int id)
-	{
-		this.id = id;
-	}
-	
+	/**
+	 * Retourne le X du Bullet
+	 * @return X
+	 */
 	public int getX()
 	{
 		return (int)x;
 	}
 	
+	/**
+	 * Retourne le Y du Bullet
+	 * @return Y
+	 */
 	public int getY()
 	{
 		return (int)y;
 	}
 	
+	/**
+	 * Déplacement selon X.
+	 * @return DX
+	 */
 	public double getDX()
 	{
 		return dx;
 	}
 	
+	/**
+	 * Déplacement selon Y.
+	 * @return DY
+	 */
 	public double getDY()
 	{
 		return dy;
 	}
 	
+	/**
+	 * Le X du sprite du Bullet.
+	 * @return spriteX
+	 */
 	public int getSpriteX()
 	{
 		return (int)X;
 	}
 	
+	/**
+	 * Le Y du sprite du Bullet.
+	 * @return spriteY
+	 */
 	public int getSpriteY()
 	{
 		return (int)Y;
 	}
 	
+	/**
+	 * Le sprite du Bullet.
+	 * @return le sprite du Bullet
+	 */
 	public BufferedImage getSprite()
 	{
 		return BulletType.getFromID(id).getSprite();
 	}
 	
-	public void setXY(int x,int y)
-	{
-		this.x=x;
-		this.y=y;
-	}
-	
-	public void setDXDY(int x,int y)
-	{
-		this.dx=x;
-		this.dy=y;
-	}
-	
+	/**
+	 * Retourne l'ID
+	 * @return ID
+	 */
 	public int getID()
 	{
 		return id;

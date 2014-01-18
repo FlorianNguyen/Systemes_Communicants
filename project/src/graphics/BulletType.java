@@ -13,7 +13,7 @@ import javax.imageio.ImageIO;
  *
  */
 public enum BulletType {
-	BASIC_1(1,50,4,200),
+	BASIC_1(1,50,4,320),
 	BASIC_2(2,100,5,300),
 	BOSS(3,200,4,300),
 	BASIC_PLAYER(0,100*10,15,150);
@@ -51,11 +51,20 @@ public enum BulletType {
 		return id;
 	}
 	
+	/**
+	 * Temps de rechargement du BulletType.
+	 * @return le temps de rechargement
+	 */
 	public int getReloadTime()
 	{
 		return reloadTime;
 	}
 	
+	/**
+	 * Retourne le BulletType associé à un ID
+	 * @param id l'ID
+	 * @return le Bullet associé
+	 */
 	public static BulletType getFromID(int id)
 	{
 		switch(id)

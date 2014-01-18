@@ -10,6 +10,11 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * L'objet BallManagement contient un array de Bullet et permet leur gestion par les classes d'affichage.
+ * @author Florian
+ *
+ */
 public class BallManagement {
 
 	private volatile ArrayList<Bullet> bullets;
@@ -39,6 +44,9 @@ public class BallManagement {
 		}
 	}
 
+	/**
+	 * Déplace toutes les Bullet de l'array.
+	 */
 	public void update()
 	{
 		for(int i=0;i<bullets.size();i++) {
@@ -51,6 +59,10 @@ public class BallManagement {
 		}
 	}
 
+	/**
+	 * Supprime une Bullet de l'array.
+	 * @param b le Bullet à supprimer
+	 */
 	public void remove(Bullet b)
 	{
 		synchronized(bullets)
@@ -58,21 +70,22 @@ public class BallManagement {
 			bullets.remove(b);
 		}
 	}
+	
+	/**
+	 * Retourne les balles.
+	 * @return l'array de balles
+	 */
 	public ArrayList<Bullet> getBalls()
 	{
 		return bullets;
 	}
 
+	/**
+	 * Dit si l'array est vide on non.
+	 * @return true si vide, et false sinon
+	 */
 	public boolean isEmpty()
 	{
 		return (bullets.size()==0);
-	}
-
-	public void resetBalls()
-	{
-		synchronized(bullets)
-		{
-			bullets = new ArrayList<Bullet>();
-		}
 	}
 }

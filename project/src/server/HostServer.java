@@ -44,7 +44,6 @@ public class HostServer extends Thread {
 			int NUMBER;
 			int tempX,tempY,tempID;
 			double tempDX,tempDY;
-			boolean shoot;
 			ArrayList<Enemy> enemies;
 			Enemy tempE;
 			connectionSocket = new ServerSocket(6789); // mobilisation du port 6789
@@ -68,7 +67,7 @@ public class HostServer extends Thread {
 				}
 				if(System.currentTimeMillis()-time>50)
 				{
-//					game.canIterate.acquire();
+					game.canIterate.acquire();
 					// RECEPTION POSITION PLAYER2 + TIR
 					x = inFromClient.readInt(); 
 					y = inFromClient.readInt();
@@ -79,8 +78,8 @@ public class HostServer extends Thread {
 					//System.out.println(game.getPlayer1().getX());
 					outToClient.writeInt(game.getPlayer1().getY());
 					//System.out.println(game.getPlayer1().getX());
-					//						outToClient.writeInt(game.getPlayer1().getScore());
-					//						outToClient.writeInt(game.getLevel());
+					outToClient.writeInt(game.getPlayer1().getScore());
+					outToClient.writeInt(game.getLevel());
 					game.setPlayer2XY(x,y);
 					//						if(shoot==true)
 					//						{
@@ -88,8 +87,14 @@ public class HostServer extends Thread {
 					//						}
 
 					// ENVOI BULLETS JOUEUR
-					
-					
+					outToClient.writeBoolean(game.needShooting());
+					game.setNeedShooting(false);
+					boolean shoot = inFromClient.readBoolean();
+					if(shoot)
+					{
+						game.getPlayer2().primaryShooting(game.getPlayerBalls());
+					}
+
 					// ENVOI ENNEMIS 
 					//					spawn = game.needSpawnEnemy();
 					//					outToClient.writeBoolean(spawn);
@@ -121,17 +126,17 @@ public class HostServer extends Thread {
 					//							outToClient.writeInt(b.getID());
 					//						}
 					//					}
-//					game.canIterate.release();
+					game.canIterate.release();
 				}
 				else yield();
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();}
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public boolean playerConnected()
