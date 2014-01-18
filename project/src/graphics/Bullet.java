@@ -17,8 +17,7 @@ public class Bullet {
 
 	private int id;
 	private double x,y,X,Y,dx,dy;
-	private long index;
-	
+
 	/**
 	 * Constructeur par défaut de Bullet
 	 * @param x0 Abscisse du Bullet à la création
@@ -36,15 +35,7 @@ public class Bullet {
 		dx=dx0;
 		dy=dy0;
 	}
-	
-	/**
-	 * Retourne l'index d'une balle.
-	 * @return
-	 */
-	public long getIndex()
-	{
-		return index;
-	}
+
 	/**
 	 * Met à jour les positions du Bullet grâce à une incrémentation de x et y
 	 */
@@ -55,7 +46,7 @@ public class Bullet {
 		X+=dx;
 		Y+=dy;
 	}
-	
+
 	/**
 	 * Met le Bullet à la valeur désirée.
 	 * @param x X
@@ -74,7 +65,7 @@ public class Bullet {
 		this.dy=dy;
 		this.id = btID;
 	}
-	
+
 	/**
 	 * Retourne le X du Bullet
 	 * @return X
@@ -83,7 +74,7 @@ public class Bullet {
 	{
 		return (int)x;
 	}
-	
+
 	/**
 	 * Retourne le Y du Bullet
 	 * @return Y
@@ -92,7 +83,7 @@ public class Bullet {
 	{
 		return (int)y;
 	}
-	
+
 	/**
 	 * Déplacement selon X.
 	 * @return DX
@@ -101,7 +92,7 @@ public class Bullet {
 	{
 		return dx;
 	}
-	
+
 	/**
 	 * Déplacement selon Y.
 	 * @return DY
@@ -110,7 +101,7 @@ public class Bullet {
 	{
 		return dy;
 	}
-	
+
 	/**
 	 * Le X du sprite du Bullet.
 	 * @return spriteX
@@ -119,7 +110,7 @@ public class Bullet {
 	{
 		return (int)X;
 	}
-	
+
 	/**
 	 * Le Y du sprite du Bullet.
 	 * @return spriteY
@@ -128,7 +119,7 @@ public class Bullet {
 	{
 		return (int)Y;
 	}
-	
+
 	/**
 	 * Le sprite du Bullet.
 	 * @return le sprite du Bullet
@@ -137,7 +128,7 @@ public class Bullet {
 	{
 		return BulletType.getFromID(id).getSprite();
 	}
-	
+
 	/**
 	 * Retourne l'ID
 	 * @return ID

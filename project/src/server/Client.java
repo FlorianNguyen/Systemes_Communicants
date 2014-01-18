@@ -29,6 +29,7 @@ public class Client extends Thread {
 	private BackgroundDisplayClient game;
 	private ArrayList<Bullet> toSend,nextToSend;
 	private int x,y,score,level;
+	private InetAddress address;
 
 	/**
 	 * Constructeur de Client prenant en argument le Player du joueur souhaitant rejoindre une partie.
@@ -36,11 +37,17 @@ public class Client extends Thread {
 	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
-	public Client(BackgroundDisplayClient game) 
+	public Client(BackgroundDisplayClient game, String host) 
 	{
 		toSend = new ArrayList<Bullet>();
 		nextToSend = new ArrayList<Bullet>();
 		this.game = game;
+		try {
+			address=InetAddress.getByName(host);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}	
 
 	/**
@@ -50,14 +57,12 @@ public class Client extends Thread {
 	public void run() 
 	{
 		try {
-			clientSocket = new Socket(InetAddress.getLocalHost(),6789);
+
+			//CREATIONS ET CONNEXION
+			clientSocket = new Socket(address,6789);
 			outToServer = new DataOutputStream(clientSocket.getOutputStream());
 			inFromServer = new DataInputStream(clientSocket.getInputStream());
-			int NUMBER;
-			int tempX,tempY,tempID;
-			double tempDX,tempDY;
-			Bullet tempBullet;
-			ArrayList<Bullet> ballArray = new ArrayList<Bullet>();
+
 			long time = System.currentTimeMillis();
 			AtomicBoolean spawn = new AtomicBoolean(false);
 			AtomicInteger remove = new AtomicInteger(-1);
@@ -65,7 +70,7 @@ public class Client extends Thread {
 			boolean sReady = false;
 
 
-			while(true) // FAUSSE CONDITION : à changer
+			while(!game.isOver()) // FAUSSE CONDITION : à changer
 			{
 				if(!sReady)
 				{
@@ -75,105 +80,41 @@ public class Client extends Thread {
 				}
 				if(System.currentTimeMillis()-time>50)
 				{
+					// PRISE D'UN JETON SEMAPHORE
 					game.canIterate.acquire();
+
 					// PHASE D'ENVOI DES COORDONNEES PLAYER CLIENT + TIR
 					outToServer.writeInt(game.getPlayer1().getX());
-					//System.out.println(game.getPlayer1().getX());
 					outToServer.writeInt(game.getPlayer1().getY());
-					//System.out.println(game.getPlayer1().getY());
-					//					outToServer.writeBoolean(game.needShooting());
+					outToServer.writeInt(game.getPlayer1().getLife());
 
 					// RECEPTION COORDONNEES PLAYER SERVEUR + SCORE + LEVEL
 					x = inFromServer.readInt();
 					y = inFromServer.readInt();
 					score = inFromServer.readInt();
-					level = inFromServer.readInt();
 					game.setPlayer2XY(x,y);
+					game.getPlayer1().setScore(score);
 
 					// PARTIE TIR
 					boolean shoot = inFromServer.readBoolean();
+					outToServer.writeBoolean(true);
 					outToServer.writeBoolean(game.needShooting());
+					outToServer.writeBoolean(true);
 					game.setNeedShooting(false);
 					if(shoot)
 					{
 						game.getPlayer2().primaryShooting(game.getPlayerBalls());
 					}
-					//					game.canIterate.release();
-					//					game.getPlayer1().setScore(score);
-					//					game.setLevel(level);
-
-					// RECEPTION DES ENNEMIS
-					//					spawn.set(inFromServer.readBoolean());
-					//					remove.set(inFromServer.readInt());
-					//					if(spawn.get())
-					//					{
-					//						System.out.println(spawn);
-					//						spawn.set(false);
-					//						int index = inFromServer.readInt();
-					//						synchronized(game.getEnemies())
-					//						{
-					//							if(level%BackgroundDisplayHost.BOSSFREQUENCY==0)
-					//							{
-					//								game.getEnemies().add(new Enemy(game.background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_1,level,index));
-					//							}
-					//							else if(level%BackgroundDisplayHost.BOSSFREQUENCY==1)
-					//							{
-					//								game.getEnemies().add(new Enemy(game.background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_1,level,index));
-					//							}
-					//							else if(level%BackgroundDisplayHost.BOSSFREQUENCY==2)
-					//							{
-					//								game.getEnemies().add(new Enemy(game.background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_2,level,index));
-					//							}
-					//							else if(level%BackgroundDisplayHost.BOSSFREQUENCY==3)
-					//							{
-					//								game.getEnemies().add(new Enemy(game.background.getWidth()/2,0,BulletType.BASIC_1,Ship.ENEMY_2,level,index));
-					//							}
-					//							else if(level%BackgroundDisplayHost.BOSSFREQUENCY==4)
-					//							{
-					//								game.getEnemies().add(new Enemy(game.background.getWidth()/2,0,BulletType.BOSS,Ship.BOSS,level,index));
-					//							}
-					//						}
-					//					}
-					//					if(remove.get()!=-1)
-					//					{
-					//						synchronized(game.getEnemies())
-					//						{
-					//							for(int i=0;i<game.getEnemies().size();i++)
-					//							{
-					//								Enemy e = game.getEnemies().get(i);
-					//								if(e.getLevelIndex()==remove.get())
-					//								{
-					//									game.getEnemies().remove(e);
-					//									remove.set(-1);
-					//								}
-					//							}
-					//						}
-					//					}
-
-					//					// RECEPTION DES BALLES
-					//					synchronized(ballArray)
-					//					{
-					//						ballArray.removeAll(ballArray);
-					//						game.resetBalls();
-					//						NUMBER = inFromServer.readInt();
-					//						for(int i=0;i<NUMBER;i++)
-					//						{
-					//							tempX = inFromServer.readInt();
-					//							tempY = inFromServer.readInt();
-					//							tempDX = inFromServer.readDouble();
-					//							tempDY = inFromServer.readDouble();
-					//							tempID = inFromServer.readInt();
-					//							ballArray.add(new Bullet(tempID,tempX,tempY,tempDX,tempDX));
-					//						}
-					//					}
-					//					synchronized(game.getPlayerBalls())
-					//					{
-					//						game.addBalls(ballArray);
-					//					}
-
 				}
 				else yield();
 			}
+			
+			clientSocket.close();
+			time = System.currentTimeMillis();
+			while(System.currentTimeMillis()-time<1000){}
+			System.out.println(game.getScore());
+			game.close();
+			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

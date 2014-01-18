@@ -39,7 +39,8 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 	public static final int BOSSFREQUENCY = 5; // NOMBRE DE NIVEAUX ENTRE CHAQUE BOSS
 	public static BufferedImage background; // IMAGE SERVANT DE FOND D'ECRAN DEFILANT
 	public static BufferedImage friendSprite = Ship.FRIEND.getSprite(); // SPRITE TRANSPARENT
-	public static BufferedImage mySprite = Ship.BASIC_PLAYER.getSprite(); // SPRITE PLEIN3
+	public static BufferedImage mySprite = Ship.BASIC_PLAYER.getSprite(); // SPRITE PLEIN
+	public static volatile boolean canClose;
 	public static final int[][] levels = // NIVEAUX ET VAGUES DE VAISSEAUX PAR NIVEAU
 		{
 		{1,0,0}, //niveau 1, 3 vagues...
@@ -47,7 +48,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 		{0,1,0}, //niveau 3
 		{0,2,0},  // etc
 		{0,0,1}};
-	
+
 	// SEMAPHORE POUR LA SYNCHRONISATION AVEC LE SERVEUR
 	public Semaphore canIterate = new Semaphore(1);
 
@@ -59,8 +60,8 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 	private long lastSpawnTime; // TEMPS DE DERNIER SPAWN
 	private boolean isOver,enablePlayer2; // GAME OVER, PLAYER2 AUTORISE
 	private boolean multiOn; // MULTIJOUEUR ACTIVE
-	private int needRemove;
-	private boolean needShooting;
+	private int needRemove; // BESOIN DE SUPPRESSION A TRANSFERER
+	private boolean needShooting; // BESOIN DE TIR A TRANSFERER
 
 	private JFrame frame;
 	private Mouse mouse = new Mouse(); // MOUSELISTENER PERMETTANT DE CONTROLER LE JOUEUR
@@ -83,6 +84,9 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 			player1 = new Player(name,false);
 			frame = new JFrame();
 			notSpawnedYet=true;
+			canClose=false;
+			isOver = false;
+			this.multiOn = multiOn;
 			needShooting=false;
 			lastSpawnTime = 0;
 			needRemove=-1;
@@ -90,14 +94,15 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 			height = background.getHeight();
 			width = background.getWidth();
 			level = -1;
-			isOver = false;
-			this.multiOn = multiOn;
 			pBalls = new BallManagement();
 			eBalls = new BallManagement();
 
 			// CAS DU MULTIJOUEUR
-			player2 = new Player("P2",false);
-			enablePlayer2 = false;
+			if(multiOn)
+			{
+				player2 = new Player("P2",false);
+				enablePlayer2 = false;
+			}
 
 			// OPTIONS DU JFRAME
 			frame.addMouseListener(mouse);
@@ -128,7 +133,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 	{
 		return player2;
 	}
-	
+
 	/**
 	 * Retourne le Player du joueur 1.
 	 * @return le Player du joueur 1
@@ -276,7 +281,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 	{
 		return needShooting;
 	}
-	
+
 	/**
 	 * Met needShooting à la valeur désirée
 	 * @param b la nouvelle valeur de needShooting
@@ -285,7 +290,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 	{
 		needShooting=b;
 	}
-	
+
 	/**
 	 * Définit l'action réalisée en rythme avec le Timer. 
 	 * Il faut notamment gérer les cas de figure où la souris sort de la fenêtre de jeu,
@@ -331,7 +336,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 		}
 
 		// PARTIE RELATIVE AU TIR DU VAISSEAU PLAYER
-		if(mouse.get()==true)
+		if(mouse.get()==true && player1.getLife()>0)
 		{
 			needShooting=true;
 			player1.primaryShooting(pBalls); // primaryShooting prend en compte le temps de rechargement
@@ -359,6 +364,12 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 			if(!enemy.isAlive())
 			{
 				player1.addToScore(enemy.getShip().getScore(),level); // J1 détient le score, et pas J2
+				player1.addToXp(enemy.getShip().getXP());
+				if(multiOn && enablePlayer2)
+				{
+					player2.setScore(player1.getScore());
+					player2.setXP(player1.getXP());
+				}
 				setNeedRemove(enemy.getLevelIndex());
 				enemies.remove(enemy);
 			}
@@ -367,9 +378,17 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 		{
 			next();
 		}
-		if(player1.getLife()<0 && player2.getLife()<0)
+		if(player1.getLife()<=0)
 		{
-			isOver=true;
+			if(!multiOn)
+			{
+				isOver=true;
+				canClose=true;
+			}
+			else if(!multiOn|player2.getLife()<=0)
+			{
+				isOver=true;
+			}
 		}
 		canIterate.release();
 		repaint();
@@ -617,12 +636,23 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 		}
 	}
 
+	/**
+	 * Pour fermer la fenêtre, et stopper le Thread.
+	 */
+	public void close()
+	{
+		canClose=true;
+	}
+
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		while(true)
+		while(!isOver)
 		{
 			Thread.yield();
 		}
+		frame.setVisible(false);
+		frame.dispose();
+		System.exit(0);
 	}
 }

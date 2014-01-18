@@ -65,6 +65,7 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 	private boolean multiOn; // MULTIJOUEUR ACTIVE
 	private int needRemove; // BESOIN DE SUPPRESSION D'ENNEMIS A TRANSMETTRE AU SERVEUR
 	private boolean needShooting; // BESOIN DE TIR A TRANSMETTRE AU SERVEUR
+	private boolean canClose; // BESOIN DE FERMER LA FENETRE
 
 	private java.util.Timer enemyTimer = new java.util.Timer(); // TIMER POUR PROGRAMMER LE SPAWN D'ENNEMIS EN DIFFERE
 	private javax.swing.Timer t = new javax.swing.Timer(DEFAULT_FREQUENCY,this); // TIMER POUR LE RAFRAICHISSEMENT DES IMAGES
@@ -89,6 +90,7 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 			eBalls = new BallManagement();
 
 			needShooting=false;
+			canClose = false;
 			notSpawnedYet=true;
 			isOver = false;
 			lastSpawnTime = 0;
@@ -338,7 +340,7 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 		}
 
 		// PARTIE RELATIVE AU TIR DU VAISSEAU PLAYER
-		if(mouse.get()==true)
+		if(mouse.get()==true & player1.getLife()>0)
 		{
 			needShooting = true;
 			player1.primaryShooting(pBalls); // primaryShooting prend en compte le temps de rechargement
@@ -360,13 +362,18 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 			if(enemy.isAlive() && isInScreen(enemy.getX(),enemy.getY(),enemy.getShip()))
 			{
 				enemy.update();
+				enemy.shoot(eBalls);
 				enemy.getHitBy(pBalls,level); //getHitBy() doit tenir compte du niveau pour que la difficulté augmente
 			}
 			if(!enemy.isAlive())
 			{
-				player1.addToScore(enemy.getShip().getScore(),level); // J1 détient le score, et pas J2
+//				player1.addToScore(enemy.getShip().getScore(),level); // J1 détient le score, et pas J2
+				player2.setScore(player1.getScore());
+				player1.addToXp(enemy.getShip().getXP());
+				player2.setXP(player1.getXP());
 				setNeedRemove(enemy.getLevelIndex());
 				enemies.remove(enemy);
+				System.out.println(player1.getScore());
 			}
 		}
 		
@@ -377,7 +384,7 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 		}
 		
 		// PARTIE TERMINEE ?
-		if(player1.getLife()<0 && player2.getLife()<0)
+		if(player1.getLife()<=0 && player2.getLife()<0)
 		{
 			isOver=true;
 		}
@@ -537,7 +544,6 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 												//												setNeedSpawnEnemy(true);
 											}
 										},2000*0);
-//								setLastEnemyIndex(0);
 							}
 							else if(i==1)
 							{
@@ -550,7 +556,6 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 												//												setNeedSpawnEnemy(true);
 											}
 										},2000*1);
-//								setLastEnemyIndex(0);
 							}
 							if(i==levels[(level)%BOSSFREQUENCY][0]-1)
 							{
@@ -641,12 +646,28 @@ public class BackgroundDisplayClient extends JPanel implements ActionListener, R
 		}
 	}
 
+	/**
+	 * Pour fermer la fenêtre, et stopper le Thread.
+	 */
+	public void close()
+	{
+		canClose=true;
+		System.out.println(canClose);
+	}
+	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		while(true)
+		while(!canClose)
 		{
-			Thread.yield();
+			if(isOver)
+			{
+				System.out.println("entered");
+			time = System.currentTimeMillis();
+			while(System.currentTimeMillis()-time<1000){}
+			canClose=true;
+			}
 		}
+		frame.dispose();
 	}
 }

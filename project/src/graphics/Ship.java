@@ -15,7 +15,7 @@ public enum Ship {
 	BASIC_PLAYER(0,100*100,0,0),
 	FRIEND(-1,100*100,0,0),
 	ENEMY_1(1,100*30,1000,10),
-	ENEMY_2(2,100*50,3000,20),
+	ENEMY_2(2,100*50,3000,30),
 	BOSS(3,100*80,10000,100);
 
 	private BufferedImage sprite;

@@ -106,11 +106,21 @@ public class Player {
 	{
 		this.level = value;
 	}
+	
+	/**
+	 * Retourne l'XP.
+	 * @return XP
+	 */
 	public int getXP()
 	{
 		return xp;
 	}
 
+	/**
+	 * Le player se fait toucher par les balles de l'array.
+	 * @param pool Array à considérer
+	 * @param level niveau actuel
+	 */
 	public void getHitBy(BallManagement pool,int level)
 	{
 		synchronized(pool.getBalls())
@@ -155,7 +165,7 @@ public class Player {
 	}
 
 	/**
-	 * Retourne le sprite du player
+	 * Retourne le sprite du player.
 	 * @return le sprite associé au player
 	 */
 	public BufferedImage getSprite()
@@ -165,7 +175,7 @@ public class Player {
 
 	/**
 	 * Retourne l'ascisse X du joueur.
-	 * @return l'abscisse X du joueur.
+	 * @return l'abscisse X du joueur
 	 */
 	public int getX()
 	{
@@ -174,18 +184,26 @@ public class Player {
 
 	/**
 	 * Retourne l'ordonnée Y du joueur.
-	 * @return l'ordonnée Y du joueur.
+	 * @return l'ordonnée Y du joueur
 	 */
 	public int getY()
 	{
 		return y;
 	}
 
+	/**
+	 * Retourne le X du sprite.
+	 * @return le X du sprite
+	 */
 	public int getSpriteX()
 	{
 		return X;
 	}
 
+	/**
+	 * Retourne le Y du sprite.
+	 * @return le Y du sprite
+	 */
 	public int getSpriteY()
 	{
 		return Y;
@@ -199,11 +217,27 @@ public class Player {
 		return life;
 	}
 
+	/**
+	 * Fixe la vie à une valeur donnée.
+	 * @param life la nouvelle valeur de la vie
+	 */
+	public void setLife(int life)
+	{
+		this.life=life;
+	}
+	/**
+	 * Met le score à la valeur désirée.
+	 * @param value la nouvelle valeur du score
+	 */
 	public void setScore(int value)
 	{
 		score = value;
 	}
 
+	/**
+	 * Méthode de tir pour le Player
+	 * @param bm l'array dans lequel stocker les balles
+	 */
 	public void primaryShooting(BallManagement bm)
 	{
 		synchronized(bm.getBalls())
@@ -229,7 +263,7 @@ public class Player {
 						e.printStackTrace();
 					}
 				}
-				else if(xp>1000)
+				else if(xp>=1000)
 				{
 					try {
 						shootSem.acquire();
@@ -246,11 +280,19 @@ public class Player {
 		}
 	}
 
+	/**
+	 * Retourne le score.
+	 * @return le score
+	 */
 	public int getScore()
 	{
 		return score;
 	}
 
+	/**
+	 * Permet de savoir si l'on peut tirer.
+	 * @return true si oui, false sinon
+	 */
 	public boolean canShoot()
 	{
 		if(System.currentTimeMillis()-lastShotTime>BulletType.BASIC_PLAYER.getReloadTime())
@@ -260,6 +302,10 @@ public class Player {
 		else return false;
 	}
 
+	/**
+	 * Retourne le ship du Player.
+	 * @return le ship
+	 */
 	public Ship getShip()
 	{
 		return pShip;

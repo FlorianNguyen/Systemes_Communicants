@@ -1,4 +1,4 @@
-package others;
+package gameLaunchers;
 
 import server.HostServer;
 import game.BackgroundDisplayHost;

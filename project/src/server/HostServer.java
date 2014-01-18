@@ -2,6 +2,7 @@ package server;
 
 import game.BackgroundDisplayHost;
 import graphics.Enemy;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -21,11 +22,15 @@ public class HostServer extends Thread {
 	DataInputStream inFromClient;
 	DataOutputStream outToClient;
 	private BackgroundDisplayHost game;
-	private int x,y; // Position du player 2
+	private int x,y,life; // Position du player 2 et vie
 	private boolean playerConnected;
 	public static long FREQUENCY = 10;
 	private long startTime;
 
+	/**
+	 * Constructeur par défaut.
+	 * @param game Partie à considérer
+	 */
 	public HostServer(BackgroundDisplayHost game)
 	{
 		startTime = System.currentTimeMillis();
@@ -41,11 +46,6 @@ public class HostServer extends Thread {
 	{
 		try {
 			ServerSocket connectionSocket;
-			int NUMBER;
-			int tempX,tempY,tempID;
-			double tempDX,tempDY;
-			ArrayList<Enemy> enemies;
-			Enemy tempE;
 			connectionSocket = new ServerSocket(6789); // mobilisation du port 6789
 			Socket socket = connectionSocket.accept(); // attente de connexion
 			System.out.println("CONNEXION SUCCEEDED");
@@ -54,82 +54,56 @@ public class HostServer extends Thread {
 			long time = System.currentTimeMillis();
 			outToClient.writeBoolean(true);	// le serveur est prêt			
 			boolean cReady = false;
-			boolean spawn;
-			int remove;
 
-			while(true)
+			while(!game.isOver())
 			{
 				if(!cReady)
 				{
+					// CONFIRMATION POUR DEMARRAGE PSEUDO-"SIMULTANE"
 					cReady = inFromClient.readBoolean();
 					game.enableMultiplayer();
 					playerConnected = true;
 				}
 				if(System.currentTimeMillis()-time>50)
 				{
+					// PRISE D'UN JETON SEMAPHORE
 					game.canIterate.acquire();
+					
 					// RECEPTION POSITION PLAYER2 + TIR
 					x = inFromClient.readInt(); 
 					y = inFromClient.readInt();
-					//					shoot = inFromClient.readBoolean();
+					life = inFromClient.readInt();
 
 					// ENVOI POSITIONS JOUEUR1
 					outToClient.writeInt(game.getPlayer1().getX());
-					//System.out.println(game.getPlayer1().getX());
 					outToClient.writeInt(game.getPlayer1().getY());
-					//System.out.println(game.getPlayer1().getX());
 					outToClient.writeInt(game.getPlayer1().getScore());
-					outToClient.writeInt(game.getLevel());
 					game.setPlayer2XY(x,y);
-					//						if(shoot==true)
-					//						{
-					//							game.getPlayer2().primaryShooting(game.getPlayerBalls());
-					//						}
+					game.getPlayer2().setLife(life);
 
 					// ENVOI BULLETS JOUEUR
 					outToClient.writeBoolean(game.needShooting());
+					inFromClient.readBoolean();
 					game.setNeedShooting(false);
 					boolean shoot = inFromClient.readBoolean();
+					inFromClient.readBoolean();
 					if(shoot)
 					{
 						game.getPlayer2().primaryShooting(game.getPlayerBalls());
 					}
-
-					// ENVOI ENNEMIS 
-					//					spawn = game.needSpawnEnemy();
-					//					outToClient.writeBoolean(spawn);
-					//					remove = game.getNeedRemove();
-					//					outToClient.writeInt(remove);
-					//					if(spawn)
-					//					{
-					//						outToClient.writeInt(game.getLastEnemyIndex());
-					//						game.setNeedSpawnEnemy(false);
-					//					}
-					//					if(remove!=-1)
-					//					{
-					//						game.setNeedRemove(-1);
-					//					}
-
-
-					//					// ENVOI BALLES JOUEUR
-					//					ArrayList<Bullet> balls = game.getPlayerBalls().getBalls();
-					//					synchronized(balls)
-					//					{
-					//						NUMBER = balls.size();
-					//						outToClient.writeInt(NUMBER);
-					//						for(Bullet b:balls)
-					//						{
-					//							outToClient.writeInt(b.getX());
-					//							outToClient.writeInt(b.getY());
-					//							outToClient.writeDouble(b.getDX());
-					//							outToClient.writeDouble(b.getDY());
-					//							outToClient.writeInt(b.getID());
-					//						}
-					//					}
+					
 					game.canIterate.release();
 				}
 				else yield();
 			}
+			
+			socket.close();
+			connectionSocket.close();
+//			time = System.currentTimeMillis();
+//			while(System.currentTimeMillis()-time<1000){}
+//			System.out.println(game.getScore());
+//			game.close();
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
