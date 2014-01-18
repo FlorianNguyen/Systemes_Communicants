@@ -14,16 +14,6 @@ public class CreateGame {
 		game.start();
 		HostServer server = new HostServer(GAME);
 		server.start();
-//		if(GAME.isOver())
-//		{
-//			time = System.currentTimeMillis();
-//			while(System.currentTimeMillis()-time<500)
-//			{
-//				game.interrupt();
-//				server.interrupt();
-//			}
-//			
-//		}
 
 	}
 

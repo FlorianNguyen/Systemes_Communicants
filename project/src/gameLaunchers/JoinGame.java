@@ -12,7 +12,7 @@ public class JoinGame {
 	{
 		BackgroundDisplayClient game= new BackgroundDisplayClient("Player","background2.png");
 		new Thread(game).start();
-		Client client = new Client(game,InetAddress.getLocalHost());
+		Client client = new Client(game,"  ");
 		client.start();
 	}
 }
