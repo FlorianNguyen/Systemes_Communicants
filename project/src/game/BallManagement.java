@@ -36,11 +36,11 @@ public class BallManagement {
 	 * @param dy Déplacement selon Y
 	 * @param btID ID du BulletType
 	 */
-	public void addBall(int x,int y, double dx, double dy,int n,long index)
+	public void addBall(int x,int y, double dx, double dy,int n)
 	{
 		synchronized(bullets)
 		{
-			bullets.add(new Bullet(n,x,y,dx,dy,index));
+			bullets.add(new Bullet(n,x,y,dx,dy));
 		}
 	}
 

@@ -164,7 +164,7 @@ public class Enemy {
 	 * Méthode de tir propre à l'Enemy
 	 * @param pool le BallManagement où envoyer le Bullet(s) tiré(s)
 	 */
-	public boolean shoot(BallManagement pool,long maxIndex)
+	public boolean shoot(BallManagement pool)
 	{
 		boolean toReturn=false;
 		if(ready)
@@ -175,7 +175,7 @@ public class Enemy {
 				{
 					synchronized(pool.getBalls())
 					{
-						pool.addBall(x,y,direction*0.3,bt.getSpeed(),bt.getID(),maxIndex);
+						pool.addBall(x,y,direction*0.3,bt.getSpeed(),bt.getID());
 						lastShotTime = System.currentTimeMillis();
 						toReturn=true;
 					}
@@ -184,8 +184,8 @@ public class Enemy {
 				{
 					synchronized(pool.getBalls())
 					{
-						pool.addBall(x,y,direction*0.9,bt.getSpeed(),bt.getID(),maxIndex);
-						pool.addBall(x,y,direction*(-0.9),bt.getSpeed(),bt.getID(),maxIndex);
+						pool.addBall(x,y,direction*0.9,bt.getSpeed(),bt.getID());
+						pool.addBall(x,y,direction*(-0.9),bt.getSpeed(),bt.getID());
 						lastShotTime = System.currentTimeMillis();
 						toReturn=true;
 					}
@@ -195,7 +195,7 @@ public class Enemy {
 					synchronized(pool.getBalls())
 					{
 						for(double angle = -Math.PI/2; angle<2*Math.PI+-Math.PI/2; angle += 2*Math.PI/12) {
-							pool.getBalls().add(new Bullet(bt.getID(),x,y,bt.getSpeed()*Math.cos(angle+bossRotation),bt.getSpeed()*Math.sin(angle+bossRotation),maxIndex+(long)(angle/(Math.PI/2)+1)));
+							pool.getBalls().add(new Bullet(bt.getID(),x,y,bt.getSpeed()*Math.cos(angle+bossRotation),bt.getSpeed()*Math.sin(angle+bossRotation)));
 						}
 						bossRotation+=10*Math.PI/180;
 						lastShotTime = System.currentTimeMillis();

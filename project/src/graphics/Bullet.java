@@ -26,9 +26,8 @@ public class Bullet {
 	 * @param dx0 Vitesse de progression selon x (algébrique)
 	 * @param dy0 Vitesse de progression selon y (algébrique)
 	 */
-	public Bullet(int no, int x0, int y0,double dx0, double dy0,long index)
+	public Bullet(int no, int x0, int y0,double dx0, double dy0)
 	{
-		this.index=index;
 		id=no;
 		x=x0;
 		X=x0-BulletType.getFromID(no).getSprite().getWidth()/2;

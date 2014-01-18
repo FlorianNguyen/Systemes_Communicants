@@ -353,6 +353,7 @@ public class BackgroundDisplayHost extends JPanel implements ActionListener, Run
 			if(enemy.isAlive() && isInScreen(enemy.getX(),enemy.getY(),enemy.getShip()))
 			{
 				enemy.update();
+				enemy.shoot(eBalls);
 				enemy.getHitBy(pBalls,level); //getHitBy() doit tenir compte du niveau pour que la difficulté augmente
 			}
 			if(!enemy.isAlive())
